@@ -1,0 +1,8 @@
+enable_registration:
+    default: true
+    label:
+        title: enable_registration
+        description: ~
+    form:
+        type: Symfony\Component\Form\Extension\Core\Type\CheckboxType
+        options: []

@@ -1,0 +1,28 @@
+items:
+
+    -
+        content: 'Widget/Navigation/Sidebar/Item/Project.html.twig'
+        url:
+            route: app_project_list
+        activating_routes:
+            - app_project_list
+            - app_project_delete
+            - app_project_update
+            - app_project_create
+
+    -
+        content: 'Widget/Navigation/Sidebar/Item/Inbox.html.twig'
+        url:
+            route: app_inbox_list
+        activating_routes:
+            - app_inbox_list
+            - app_inbox_delete
+            - app_inbox_update
+            - app_inbox_create
+
+    -
+        content: 'Widget/Navigation/Sidebar/Item/Settings.html.twig'
+        url:
+            route: app_settings_list
+        activating_routes:
+            - app_settings_list

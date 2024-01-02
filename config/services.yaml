@@ -1,18 +1,10 @@
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
-
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    domain_name: '%env(DOMAIN_NAME)%'
 
 services:
-    # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
+        autowire: true
+        autoconfigure: true
     App\:
         resource: '../src/'
         exclude:
@@ -20,5 +12,40 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    _instanceof:
+        App\SMTP\MessageHandler\MessageHandlerInterface:
+            tags:
+                - { name: 'app.smtp.message_handler' }
+
+    App\Doctrine\Listener\CredentialsInboxListener:
+        tags:
+            - { name: 'doctrine.orm.entity_listener', entity: 'App\Entity\Inbox', event: 'prePersist' }
+
+    App\Business\SidebarBusiness:
+        arguments:
+            $directoryConfiguration: '%kernel.project_dir%/config/sidebar'
+
+    App\Doctrine\Listener\PasswordHasherListener:
+        tags:
+            - { name: 'doctrine.orm.entity_listener', entity: 'App\Entity\User', event: 'prePersist' }
+            - { name: 'doctrine.orm.entity_listener', entity: 'App\Entity\User', event: 'preUpdate' }
+
+    App\Doctrine\Listener\ProjectOwnerListener:
+        tags:
+            - {name: 'doctrine.orm.entity_listener', entity: 'App\Entity\Project', event: 'prePersist'}
+
+    App\Business\ParameterBusiness:
+        arguments:
+            $defaultConfigurationPath: '%kernel.project_dir%/config/parameters.yaml'
+            $userConfigurationPath: '%env(resolve:USER_CONFIGURATION_PATH)%'
+
+
+when@dev:
+    services:
+        App\Doctrine\Subscriber\FixtureSubscriber:
+            arguments:
+                $logger: '@monolog.logger.fixtures'
+            tags:
+                - { name: doctrine.event_subscriber }
+
+        Symfony\Component\HttpKernel\Profiler\Profiler: '@profiler'
