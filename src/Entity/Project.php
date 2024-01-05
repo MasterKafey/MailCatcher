@@ -19,7 +19,7 @@ class Project
     #[ORM\Column(type: Types::STRING)]
     private ?string $name = null;
 
-    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Member::class, cascade: ['persist'])]
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Member::class, cascade: ['persist','remove'])]
     private Collection $members;
 
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: Inbox::class)]
