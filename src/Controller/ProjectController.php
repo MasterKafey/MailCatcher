@@ -10,6 +10,7 @@ use App\Form\Type\ConfirmType;
 use App\Form\Type\Member\CreateMemberType;
 use App\Form\Type\Project\CreateProjectType;
 use App\Form\Type\Project\UpdateProjectType;
+use App\Form\Type\Project\LeaveProjectType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,19 +45,47 @@ class ProjectController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/list', name: 'app_project_list')]
-    public function list(
-        EntityManagerInterface $entityManager
-    ): Response
+    #[Route(path: '/leave/{id}', name: 'app_project_leave')]
+    public function leaveProject(Project $project, EntityManagerInterface $entityManager, Request $request): Response
     {
         $user = $this->getUser();
 
-        $projects = $entityManager->getRepository(Project::class)->findByUser($user);
+        $member = $entityManager
+            ->getRepository(Member::class)
+            ->findOneBy(['user' => $user, 'project' => $project]);
 
+        if (!$member) {
+            return $this->redirectToRoute('app_project_list');
+        }
+
+        $form = $this
+            ->createForm(ConfirmType::class, $project)
+            ->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->remove($member);
+            $entityManager->flush();
+            return $this->redirectToRoute('app_project_list');
+        }
+
+        return $this->render('Page/Project/confirm_form_leave.html.twig', [
+            'form' => $form
+        ]);
+    }
+
+
+    #[Route(path: '/list', name: 'app_project_list')]
+    public function list(
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $user = $this->getUser();
+        $projects = $entityManager->getRepository(Project::class)->findByUser($user);
         return $this->render('Page/Project/list.html.twig', [
             'projects' => $projects,
         ]);
     }
+
 
     #[Route(path: '/{id}', name: 'app_project_show')]
     public function show(Project $project): Response
@@ -68,7 +97,7 @@ class ProjectController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/{id}/update')]
+    #[Route(path: '/{id}/update', name: 'app_project_update')]
     public function update(
         Request                $request,
         Project                $project,
@@ -86,7 +115,6 @@ class ProjectController extends AbstractController
                 'id' => $project->getId(),
             ]);
         }
-
         return $this->render('Page/Project/update.html.twig', [
             'form' => $form->createView(),
         ]);

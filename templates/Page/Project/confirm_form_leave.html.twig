@@ -1,7 +1,7 @@
 {% extends 'Layout/Authenticated/base.html.twig' %}
 
 {% block content %}
-    <h3 class="font-semibold leading-2 text-gray-900 text-2xl">{{ 'Are you sure you want to delete the project?'|trans({}, 'project') }}</h3>
+    <h3 class="font-semibold leading-2 text-gray-900 text-2xl">{{ 'Are you sure you want to leave the project?'|trans({}, 'project') }}</h3>
     <div class="grid grid-cols-1 gap-x-8 gap-y-8 pt-10 md:grid-cols-2">
         {{ form_start(form, {'attr': {'class': 'bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-xl md:col-span-2'}}) }}
         <div class="px-4 py-6 sm:p-8">
