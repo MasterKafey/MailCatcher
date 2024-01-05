@@ -22,7 +22,7 @@ class Project
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: Member::class, cascade: ['persist','remove'])]
     private Collection $members;
 
-    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Inbox::class)]
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Inbox::class, cascade: ['remove'])]
     private Collection $inboxes;
 
     public function __construct()
