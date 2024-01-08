@@ -91,6 +91,11 @@
     <div id="#text" {{ is_active_displayed ? 'class="hidden"' }}>
         {% set is_active_displayed = true %}
         {{ mail.text|nl2br }}
+        <a href="{{ path('app_mail_send', {'id': mail.id}) }}" class="mt-2 rounded-md border-0 py-1.5 text-white hover:bg-red-300 bg-red-500 shadow-sm ring-1 ring-inset ring-red-600 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6">
+            Envoyer le mail
+        </a>
+            <a href="{{ path('app_mail_delete', {'id': mail.id}) }}" class="mt-2 rounded-md border-0 py-1.5 text-white bg-black text-center hover:bg-black focus:bg-black focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6">Supprimer</a>
+
     </div>
 {% endif %}
 <div id="#email-raw" {{ is_active_displayed ? 'class="hidden"' }}>

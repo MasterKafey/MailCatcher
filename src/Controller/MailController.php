@@ -10,11 +10,16 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email;
 
 #[Route('/mail')]
 class MailController extends AbstractController
@@ -41,6 +46,25 @@ class MailController extends AbstractController
                 'mail' => $mail,
             ]),
         ]);
+    }
+
+    #[Route(path: '/send/{id}', name: 'app_mail_send', methods: ['GET'])]
+    public function sendMail(Mail $mail, MailerInterface $mailer): RedirectResponse
+    {
+        try {
+            $email = (new Email())
+                ->from(new Address($mail->getFrom()))
+                ->to(new Address($mail->getTo()))
+                ->subject($mail->getSubject())
+                ->text($mail->getText())
+                ->html($mail->getHtml());
+
+            $mailer->send($email);
+
+            return $this->redirectToRoute('app_inbox_list');
+        } catch (\Exception $e) {
+            return $this->redirectToRoute('app_inbox_show');
+        }
     }
 
     #[Route(path: '/{id}/content', name: 'app_mail_show_content')]
