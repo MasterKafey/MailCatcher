@@ -48,8 +48,8 @@ class MailController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/send/{id}', name: 'app_mail_send', methods: ['GET'])]
-    public function sendMail(Mail $mail, MailerInterface $mailer): RedirectResponse
+    #[Route(path: '/send/{id}', name: 'app_mail_send')]
+    public function sendMail(Mail $mail, MailerInterface $mailer): JsonResponse
     {
         try {
             $email = (new Email())
@@ -61,9 +61,9 @@ class MailController extends AbstractController
 
             $mailer->send($email);
 
-            return $this->redirectToRoute('app_inbox_list');
+            return new JsonResponse(['message' => 'Mail envoyé avec succès!'], JsonResponse::HTTP_OK);
         } catch (\Exception $e) {
-            return $this->redirectToRoute('app_inbox_show');
+            return new JsonResponse(['message' => 'Erreur lors de l\'envoi du mail.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -76,26 +76,16 @@ class MailController extends AbstractController
         return new Response($mail->getHtml());
     }
 
-    #[Route(path: '/{id}/delete', name: 'app_mail_delete')]
-    public function delete(EntityManagerInterface $entityManager, Mail $mail, Request $request): Response
+    #[Route('/{id}/delete', name: 'app_mail_delete')]
+    public function delete(EntityManagerInterface $entityManager, Mail $mail, Request $request): JsonResponse
     {
-        $inbox = $mail->getInbox();
+            try {
+                $entityManager->remove($mail);
+                $entityManager->flush();
 
-        $form = $this
-            ->createForm(ConfirmType::class)
-            ->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->remove($mail);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_inbox_show', [
-                'id' => $inbox->getId(),
-            ]);
-        }
-
-        return $this->render('Page/Mail/delete.html.twig', [
-            'form' => $form->createView(),
-        ]);
+                return new JsonResponse(['message' => 'Email supprimé avec succès!'], JsonResponse::HTTP_OK);
+            } catch (\Exception $e) {
+                return new JsonResponse(['message' => 'Erreur lors de la suppression de l\'email.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            }
     }
 }
