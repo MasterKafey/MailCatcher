@@ -11,10 +11,13 @@ use App\Form\Type\Member\CreateMemberType;
 use App\Form\Type\Project\CreateProjectType;
 use App\Form\Type\Project\UpdateProjectType;
 use App\Form\Type\Project\LeaveProjectType;
+use App\Security\Voter\ProjectVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(path: '/project')]
@@ -54,7 +57,7 @@ class ProjectController extends AbstractController
             ->getRepository(Member::class)
             ->findOneBy(['user' => $user, 'project' => $project]);
 
-        if (!$member) {
+        if (!$member instanceof Member) {
             return $this->redirectToRoute('app_project_list');
         }
 
@@ -69,20 +72,34 @@ class ProjectController extends AbstractController
         }
 
         return $this->render('Page/Project/confirm_form_leave.html.twig', [
-            'form' => $form
+            'form' => $form->createView()
         ]);
     }
 
 
     #[Route(path: '/list', name: 'app_project_list')]
     public function list(
-        Request $request,
         EntityManagerInterface $entityManager
-    ): Response {
+    ): Response
+    {
         $user = $this->getUser();
         $projects = $entityManager->getRepository(Project::class)->findByUser($user);
+
+        $acceptedProjects = [];
+        $pendingProjects = [];
+
+        /** @var Project $project */
+        foreach ($projects as $project) {
+            if ($project->getMemberByUser($user)->getStatus() === MemberStatus::ACCEPTED) {
+                $acceptedProjects[] = $project;
+            } else {
+                $pendingProjects[] = $project;
+            }
+        }
+
         return $this->render('Page/Project/list.html.twig', [
-            'projects' => $projects,
+            'accepted_projects' => $acceptedProjects,
+            'pending_projects' => $pendingProjects,
         ]);
     }
 
@@ -90,6 +107,8 @@ class ProjectController extends AbstractController
     #[Route(path: '/{id}', name: 'app_project_show')]
     public function show(Project $project): Response
     {
+        $this->denyAccessUnlessGranted(ProjectVoter::VIEW, $project);
+
         return $this->render('Page/Project/show.html.twig', [
             'project' => $project,
             'members' => $project->getAcceptedMembers(),
@@ -145,18 +164,19 @@ class ProjectController extends AbstractController
 
     #[Route('/{id}/invite')]
     public function invite(
-        Project $project,
+        Project                $project,
         EntityManagerInterface $entityManager,
-        Request $request
+        Request                $request
     ): Response
     {
+        $this->denyAccessUnlessGranted(ProjectVoter::UPDATE, $project);
+
         $member = new Member();
         $member->setProject($project);
 
         $form = $this
             ->createForm(CreateMemberType::class, $member)
-            ->handleRequest($request)
-        ;
+            ->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($member);
@@ -168,5 +188,23 @@ class ProjectController extends AbstractController
         return $this->render('Page/Project/invite.html.twig', [
             'form' => $form->createView(),
         ]);
+    }
+
+    #[Route('/{id}/invitation/accept', name: 'app_project_accept_invitation')]
+    public function acceptInvitation(
+        Project                $project,
+        EntityManagerInterface $entityManager,
+    ): RedirectResponse
+    {
+        $member = $project->getMemberByUser($this->getUser());
+
+        if ($member?->getStatus() !== MemberStatus::PENDING) {
+            throw new NotFoundHttpException();
+        }
+
+        $member->setStatus(MemberStatus::ACCEPTED);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Security\Voter;
 
 use App\Entity\Member;
 use App\Entity\MemberRole;
+use App\Entity\MemberStatus;
 use App\Entity\Project;
 use App\Entity\User;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -37,6 +38,10 @@ class ProjectVoter extends Voter
         }
 
         $member = $subject->getMemberByUser($user);
+
+        if ($member->getStatus() !== MemberStatus::ACCEPTED) {
+            return false;
+        }
 
         if (!$member instanceof Member) {
             return false;

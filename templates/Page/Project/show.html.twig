@@ -1,15 +1,17 @@
 {% extends 'Layout/Authenticated/base.html.twig' %}
 
+{% set has_edit_right = is_granted(constant('App\\Security\\Voter\\ProjectVoter::UPDATE'), project) %}
+
 {% block content %}
     <div class="overflow-hidden bg-white shadow sm:rounded-lg">
         <div class="px-4 py-6 sm:px-6">
             <h3 class="text-base font-semibold leading-7 text-gray-900">{{ project.name }}</h3>
-            <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">Informations générales</p>
+            <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">{{ 'show.title'|trans({}, 'project') }}</p>
         </div>
         <div class="border-t border-gray-100">
             <dl class="divide-y divide-gray-100">
                 <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt class="text-sm font-medium text-gray-900">Membres</dt>
+                    <dt class="text-sm font-medium text-gray-900">{{ 'member.title'|trans({}, 'member') }}</dt>
                     <dd class="mt-2 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <ul role="list" class="divide-y divide-gray-100 rounded-md border border-gray-200">
                             {% for member in members %}
@@ -33,20 +35,23 @@
                 </div>
 
                 <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt class="text-sm font-medium text-gray-900">Invitations</dt>
+                    <dt class="text-sm font-medium text-gray-900">{{ 'invitation.title'|trans({}, 'member') }}</dt>
                     <dd class="mt-2 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <ul role="list" class="divide-y divide-gray-100 rounded-md border border-gray-200">
-                            <li class="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
-                                <div class="flex w-0 flex-1 items-center">
-                                    <div class="ml-4 flex min-w-0 flex-1 gap-2">
+                            {% if has_edit_right %}
+                                <li class="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
+                                    <div class="flex w-0 flex-1 items-center">
+                                        <div class="ml-4 flex min-w-0 flex-1 gap-2">
                                         <span class="truncate font-medium">
-                                            <a href="{{ path('app_project_invite', {'id': project.id}) }}" class="text-primary hover:underline">
-                                                Inviter de nouveau utilisateur
+                                            <a href="{{ path('app_project_invite', {'id': project.id}) }}"
+                                               class="text-primary hover:underline">
+                                                {{ 'invitation.create'|trans({}, 'member') }}
                                             </a>
                                         </span>
+                                        </div>
                                     </div>
-                                </div>
-                            </li>
+                                </li>
+                            {% endif %}
                             {% for member in invitations %}
                                 <li class="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
                                     <div class="flex w-0 flex-1 items-center">
@@ -107,8 +112,10 @@
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ inbox.mails|length }}</td>
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ inbox.mails is empty ? 'empty'|trans({}, 'inbox') : (inbox.mails|last).subject|default('no_subject'|trans({}, 'inbox')) }}</td>
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                    <a href="{{ path('app_inbox_update', {'id': inbox.id}) }}"
-                                       class="text-indigo-600 hover:text-indigo-900">Modifier</a>
+                                    {% if has_edit_right %}
+                                        <a href="{{ path('app_inbox_update', {'id': inbox.id}) }}"
+                                           class="text-indigo-600 hover:text-indigo-900">Modifier</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% else %}

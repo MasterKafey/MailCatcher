@@ -35,7 +35,7 @@
                             </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 bg-white">
-                            {% for project in projects %}
+                            {% for project in accepted_projects %}
                                 {% set currentMember = project.memberByUser(app.user) %}
                                 <tr>
                                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6">
@@ -47,10 +47,9 @@
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ project.creator.email }}</td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ currentMember.role.value|trans({}, 'member') }}</td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ project.inboxes|length }}</td>
-                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-sm font-medium sm:pr-6">
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-sm font-medium sm:pr-6 flex justify-between">
                                         {% if is_granted(constant('App\\Security\\Voter\\ProjectVoter::UPDATE'), project) %}
                                             <a href="{{ path('app_project_update', {'id': project.id}) }}" class="text-indigo-600 hover:text-indigo-900">Modifier</a>
-                                        <br>
                                         {% endif %}
                                         <a href="{{ path('app_project_leave', {'id': project.id}) }}" class="hover:text-red-300 text-red-500">Quitter le projet</a>
                                     </td>
@@ -59,6 +58,58 @@
                                 <tr>
                                     <td class="whitespace-nowrap py-4 text-sm font-medium text-center" colspan="6">
                                         Aucun projet configuré
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sm:flex sm:items-center pt-5">
+            <div class="sm:flex-auto">
+                <h1 class="text-base font-semibold leading-6">Invitations</h1>
+                <p class="mt-2 text-sm text-gray-700">Une liste de tous les invitations en attentes</p>
+            </div>
+        </div>
+        <div class="mt-8 flow-root">
+            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-primary">
+                            <thead class="bg-secondary text-white">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6">Nom</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Membres</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Propriétaire</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Votre role</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Nombre de boites de réceptions</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Action</th>
+                            </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                            {% for project in pending_projects %}
+                                {% set currentMember = project.memberByUser(app.user) %}
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6">
+                                        <a href="{{ path('app_project_show', {'id': project.id}) }}" class="hover:underline text-primary">
+                                            {{ project.name }}
+                                        </a>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ project.acceptedMembers|length }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ project.creator.email }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ currentMember.role.value|trans({}, 'member') }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ project.inboxes|length }}</td>
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-sm font-medium sm:pr-6 flex justify-between">
+                                        <a href="{{ path('app_project_accept_invitation', {'id': project.id}) }}" class="hover:text-blue-900 text-primary">Accepter</a>
+                                        <a href="{{ path('app_project_leave', {'id': project.id}) }}" class="hover:text-red-700 text-red-500">Refuser</a>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 text-sm font-medium text-center" colspan="6">
+                                        Aucune invitation en attente
                                     </td>
                                 </tr>
                             {% endfor %}

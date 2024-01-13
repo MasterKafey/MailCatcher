@@ -35,7 +35,7 @@ class MemberFixture extends Fixture implements DependentFixtureInterface
                     ->setProject($project)
                     ->setRole([MemberRole::EDITOR, MemberRole::VIEWER][random_int(0, 1)])
                     ->setUser($this->getReference($userReference))
-                    ->setStatus([MemberStatus::PENDING, MemberStatus::ACCEPTED, MemberStatus::REFUSED][random_int(0, 2)]);
+                    ->setStatus([MemberStatus::PENDING, MemberStatus::ACCEPTED][random_int(0, 1)]);
                 $this->persist($member, $manager, 'MEMBER');
             }
         }
