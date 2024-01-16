@@ -6,6 +6,7 @@ doctrine:
         user: '%env(DATABASE_USER)%'
         password: '%env(DATABASE_PASSWORD)%'
         driver: 'pdo_%env(DATABASE_TYPE)%'
+        server_version: '%env(DATABASE_VERSION)%'
 
         profiling_collect_backtrace: '%kernel.debug%'
     orm:

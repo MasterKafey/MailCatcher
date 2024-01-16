@@ -3,14 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Member;
-use App\Entity\MemberRole;
 use App\Entity\MemberStatus;
 use App\Entity\Project;
 use App\Form\Type\ConfirmType;
 use App\Form\Type\Member\CreateMemberType;
 use App\Form\Type\Project\CreateProjectType;
 use App\Form\Type\Project\UpdateProjectType;
-use App\Form\Type\Project\LeaveProjectType;
 use App\Security\Voter\ProjectVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
