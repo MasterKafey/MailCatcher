@@ -5,7 +5,7 @@
         <div class="w-full lg:w-1/3 lg:mr-4 mb-4 lg:mb-0">
             <ul role="list" class="shadow-lg">
                 <li class="flex md:flex-row justify-between gap-x-6 py-2 px-2 border-b-2">
-                    <div class="text-xl md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl md:order-1">
+                    <div class="text-xl md:order-1">
                         Emails de {{ inbox.name }}
                     </div>
                     <div class="hover:text-primary md:order-2">
@@ -81,3 +81,127 @@
         </div>
     </div>
 {% endblock content %}
+
+{% block javascripts %}
+    <script>
+        let tabsInitializer = function () {
+            let tabEmailLinks = document.getElementsByClassName('tab-email');
+
+            for (let i = 0; i < tabEmailLinks.length; ++i) {
+                let link = tabEmailLinks[i];
+                let tab = document.getElementById(link.getAttribute('href'));
+                link.onclick = function () {
+                    for (let j = 0; j < tabEmailLinks.length; ++j) {
+                        tabEmailLinks[j].classList.remove('text-primary', 'border-b-2', 'border-primary');
+                        let tabEmail = document.getElementById(tabEmailLinks[j].getAttribute('href'));
+                        tabEmail.classList.add('hidden');
+                    }
+                    link.classList.add('text-primary', 'border-b-2', 'border-primary');
+                    tab.classList.remove('hidden');
+                }
+            }
+
+            let iframe = document.getElementById('email-content-html');
+            if (iframe !== null) {
+                iframe.addEventListener('load', function () {
+                    let contenuIframe = iframe.contentWindow.document.body.scrollHeight + 38;
+                    iframe.style.height = contenuIframe + 'px';
+                });
+            }
+        };
+
+        let sendMail = async function (url) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const result = await response.json();
+                displayMessage(result.message, 'success');
+            } catch (error) {
+                displayMessage('Erreur lors de l\'envoi du mail.', 'error');
+            }
+        };
+
+        let deleteMail = async function (url) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const result = await response.json();
+                window.location.reload();
+                displayMessage(result.message, 'success');
+            } catch (error) {
+                displayMessage('Erreur lors de la suppression du mail.', 'error');
+            }
+        };
+
+        function displayMessage(message, type) {
+            const popupMessageContainer = document.getElementById('popup-message');
+            const popupMessageContent = document.getElementById('popup-message-content');
+
+            popupMessageContent.innerHTML = `<span class="${type === 'success' ? 'text-white' : 'text-white'}">${message}</span>`;
+            popupMessageContainer.classList.remove('hidden'); // Retire la classe hidden pour afficher le pop-up
+        }
+
+        function closePopupMessage() {
+            const popupMessageContainer = document.getElementById('popup-message');
+            popupMessageContainer.classList.add('hidden'); // Ajoute la classe hidden pour masquer le pop-up
+        }
+
+        window.onload = function () {
+            let links = document.getElementsByClassName('mail-link');
+            let emailContent = document.getElementById('mail-content');
+            let spinner = document.getElementById('loading-spinner');
+            let inboxInformation = document.getElementById('inbox-information');
+
+            for (let i = 0; i < links.length; ++i) {
+                let link = links[i];
+                link.onclick = async function () {
+                    inboxInformation.classList.add('hidden');
+                    emailContent.classList.remove('hidden');
+                    spinner.classList.remove('hidden');
+                    link.classList.add('bg-gray-100');
+                    const response = await fetch(link.getAttribute('data-link'), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                    const view = await response.json();
+                    emailContent.innerHTML = view.view;
+                    tabsInitializer();
+                    spinner.classList.add('hidden');
+
+                    // Attachez les gestionnaires d'événements aux boutons dans le nouveau contenu
+                    let sendButton = document.getElementById('sendButton');
+                    let deleteButton = document.getElementById('deleteButton');
+
+                    if (sendButton && deleteButton) {
+                        sendButton.onclick = function () {
+                            sendMail(sendButton.getAttribute('data-url'));
+                        };
+
+                        deleteButton.onclick = function () {
+                            deleteMail(deleteButton.getAttribute('data-url'));
+                        };
+                    }
+                }
+            }
+
+            document.getElementById('display-configuration-button').onclick = function () {
+                inboxInformation.classList.remove('hidden');
+                emailContent.classList.add('hidden');
+            };
+        };
+    </script>
+
+
+
+{% endblock javascripts %}
