@@ -2,7 +2,7 @@
 {% set active_class = 'text-primary border-b-2 border-primary tab-email' %}
 <div class="pb-4">
     <div class="flex justify-between items-center text-2xl pb-4">
-        <h3>{{ mail.subject }}</h3>
+        <h3 class="text-lg">{{ mail.subject }}</h3>
         <div class="flex items-center space-x-4">
             <button type="button" id="sendButton" data-url="{{ path('app_mail_send', {'id': mail.id}) }}"
                     class="flex-grow rounded-md border-0 py-2 px-4 text-white hover:bg-red-300 bg-red-500 shadow-sm ring-1 ring-inset ring-red-600 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6">
@@ -23,20 +23,22 @@
             </button>
         </div>
     </div>
-
     <div class="grid grid-cols-12 gap-4">
-        <div class="text-gray-400 col-span-9 md:max-w-2.5"><span class="text-gray-600">Expéditeur:</span>{{ mail.from }}</div>
-        <div class="col-span-2">
-            <span>{{ mail.sentAt|date('d/m/Y H:i') }}</span>
+        <div class="text-gray-400 col-span-12 md:col-span-9 md:max-w-2.5 text-xs md:text-base">
+            <span class="text-gray-600 mr-1 font-bold">Expéditeur :</span>{{ mail.from }}
         </div>
-        <div class="col-span-9">
-            <span class="text-gray-400"><span class="text-gray-600">Destinataire:</span>{{ mail.to }}</span>
+        <div class="col-span-12 md:col-span-2">
+            <span class="text-xs">{{ mail.sentAt|date('d/m/Y H:i') }}</span>
         </div>
-        <div class="col-span-2">
+        <div class="col-span-12 md:col-span-9">
+        <span class="text-gray-400 text-xs md:text-base">
+            <span class="text-gray-600 font-bold mr-1">Destinataire :</span>{{ mail.to }}
+        </span>
+        </div>
+        <div class="col-span-12 md:col-span-2 text-xs">
             Aucune pièce jointe
         </div>
     </div>
-</div>
 <div class="border-b border-gray-200 dark:border-gray-700">
     <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
         {% if mail.html is not empty %}
