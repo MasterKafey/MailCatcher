@@ -118,6 +118,7 @@
         </div>
     {% endif %}
 
+
     <div id="email-raw" {{ is_active_displayed ? 'class="hidden"' }}>
         {% set is_active_displayed = true %}
         {{ mail.raw|nl2br }}
