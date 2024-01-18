@@ -13,6 +13,7 @@
         "doctrine/orm": "^2.17",
         "php-mime-mail-parser/php-mime-mail-parser": "^8.0",
         "react/react": "^1.4",
+        "symfony/apache-pack": "^1.0",
         "symfony/console": "6.4.*",
         "symfony/dotenv": "6.4.*",
         "symfony/flex": "^2",
@@ -68,6 +69,10 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "update-database": [
+            "php bin/console doctrine:database:create --if-not-exists",
+            "php bin/console doctrine:migrations:migrate"
         ]
     },
     "conflict": {
