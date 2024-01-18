@@ -15,9 +15,10 @@ use Symfony\Component\Routing\RouterInterface;
 class UpdateListener
 {
     public function __construct(
-        private readonly UpdateBusiness  $updateBusiness,
-        private readonly RouterInterface $router,
+        private readonly UpdateBusiness      $updateBusiness,
+        private readonly RouterInterface     $router,
         private readonly EnvironmentBusiness $environmentBusiness,
+        private readonly DatabaseBusiness    $databaseBusiness,
     )
     {
 
@@ -25,11 +26,18 @@ class UpdateListener
 
     public function onKernelRequest(RequestEvent $event): void
     {
+
         if (!$this->updateBusiness->needUpdate() || $this->environmentBusiness->isCurrentEnvironment(EnvironmentBusiness::DEV_ENVIRONMENT)) {
             return;
         }
-
         $currentRoute = $event->getRequest()->attributes->get('_route');
+        if (!$this->databaseBusiness->canConnectToDatabase()) {
+            if ($currentRoute !== 'app_update_database') {
+                $event->setResponse(new RedirectResponse($this->router->generate('app_update_database')));
+            }
+            return;
+        }
+
         $updateCode = $this->updateBusiness->getUpdateCode();
 
         if (null === $updateCode && $currentRoute !== 'app_update_missing_update_code') {

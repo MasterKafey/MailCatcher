@@ -46,6 +46,10 @@ services:
         arguments:
             $updateCode: '%env(UPDATE_CODE)%'
 
+    App\Business\DatabaseBusiness:
+        arguments:
+            $withoutDatabaseConnection: '@doctrine.dbal.without_database_connection'
+
 
 when@dev:
     services:

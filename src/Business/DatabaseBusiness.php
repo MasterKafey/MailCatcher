@@ -2,6 +2,7 @@
 
 namespace App\Business;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\ConnectionException;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Doctrine\Migrations\DependencyFactory;
@@ -20,7 +21,8 @@ class DatabaseBusiness
         private readonly KernelInterface        $kernel,
         private readonly EntityManagerInterface $entityManager,
         private readonly DependencyFactory      $dependencyFactory,
-        private readonly ParameterBagInterface  $parameterBag
+        private readonly ParameterBagInterface  $parameterBag,
+        private readonly Connection             $withoutDatabaseConnection,
     )
     {
     }
@@ -74,6 +76,17 @@ class DatabaseBusiness
         if (!empty($this->getMissingMigrations())) {
             $this->migrate();
         }
+    }
+
+    public function canConnectToDatabase(): bool
+    {
+        try {
+            $this->withoutDatabaseConnection->connect();
+        } catch (ConnectionException) {
+            return false;
+        }
+
+        return true;
     }
 
     public function doesDatabaseExist(): bool

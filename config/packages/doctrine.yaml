@@ -1,14 +1,23 @@
 doctrine:
     dbal:
-        dbname: '%env(DATABASE_NAME)%'
-        host: '%env(DATABASE_HOST)%'
-        port: '%env(DATABASE_PORT)%'
-        user: '%env(DATABASE_USER)%'
-        password: '%env(DATABASE_PASSWORD)%'
-        driver: 'pdo_%env(DATABASE_TYPE)%'
-        server_version: '%env(DATABASE_VERSION)%'
-
-        profiling_collect_backtrace: '%kernel.debug%'
+        connections:
+            default:
+                dbname: '%env(DATABASE_NAME)%'
+                host: '%env(DATABASE_HOST)%'
+                port: '%env(DATABASE_PORT)%'
+                user: '%env(DATABASE_USER)%'
+                password: '%env(DATABASE_PASSWORD)%'
+                driver: 'pdo_%env(DATABASE_TYPE)%'
+                server_version: '%env(DATABASE_VERSION)%'
+                profiling_collect_backtrace: '%kernel.debug%'
+            without_database:
+                host: '%env(DATABASE_HOST)%'
+                port: '%env(DATABASE_PORT)%'
+                user: '%env(DATABASE_USER)%'
+                password: '%env(DATABASE_PASSWORD)%'
+                driver: 'pdo_%env(DATABASE_TYPE)%'
+                server_version: '%env(DATABASE_VERSION)%'
+                profiling_collect_backtrace: '%kernel.debug%'
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true

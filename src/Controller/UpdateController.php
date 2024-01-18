@@ -26,7 +26,9 @@ class UpdateController extends AbstractController
             return $this->redirectToRoute('app_authentication_login');
         }
 
-        $mustCreateDatabase = !$databaseBusiness->doesDatabaseExist();
+        $canConnectToDatabase = $databaseBusiness->canConnectToDatabase();
+        $mustCreateDatabase = true ?? !$databaseBusiness->doesDatabaseExist();
+
         if (!$mustCreateDatabase) {
             $mustMigrate = !empty($databaseBusiness->getMissingMigrations());
         } else {
@@ -36,7 +38,7 @@ class UpdateController extends AbstractController
         $model = new UpdateCodeModel();
         $form = $this->createForm(UpdateCodeType::class, $model)->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($form->isSubmitted() && $form->isValid() && $canConnectToDatabase) {
             if ($model->getCode() !== $updateBusiness->getUpdateCode()) {
                 $form->get('code')->addError(new FormError('Le code ne correspond pas à la variable d\'environement "CODE_UPDATE"'));
             } else {
@@ -49,6 +51,7 @@ class UpdateController extends AbstractController
             'must_create_database' => $mustCreateDatabase,
             'must_migrate' => $mustMigrate,
             'database_name' => $databaseBusiness->getDatabaseName(),
+            'can_connect_to_database' => $canConnectToDatabase,
             'form' => $form->createView(),
         ]);
     }
