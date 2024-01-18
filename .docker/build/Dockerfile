@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libpq-dev \
     libzip-dev \
-    supervisor
+    supervisor \
+    npm
 
 RUN pecl install mailparse amqp \
     && docker-php-ext-enable mailparse amqp
@@ -29,14 +30,15 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
     && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
     && php -r "unlink('composer-setup.php');"
 
-#RUN git clone https://github.com/MasterKafey/MailCatcher.git /var/www/html
-COPY . /var/www/html
+RUN git clone https://github.com/MasterKafey/MailCatcher.git /var/www/html
 
 RUN chown -R www-data:www-data /var/www/html
 
 WORKDIR /var/www/html
 
 RUN composer install --no-dev --optimize-autoloader
+RUN npm install
+RUN npm run build
 
 EXPOSE 80
 
