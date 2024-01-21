@@ -2,6 +2,7 @@
 
 Mail Catcher is designed to streamline email testing in your development workflow. This advanced tool not only captures emails sent from your applications but also allows the creation of multiple inboxes, each associated with different projects. Perfect for developers and testers who need a comprehensive and flexible email testing environment.
 
+[Source Code](https://github.com/MasterKafey/MailCatcher)
 ## Features
 
 - Multiple Inboxes: Create separate inboxes for different projects, enhancing organization and testing accuracy.
@@ -9,8 +10,6 @@ Mail Catcher is designed to streamline email testing in your development workflo
 - Real-Time Email Capture: Intercepts and stores emails for instant review.
 
 - Intuitive Web Interface: View captured emails in a user-friendly web interface, supporting HTML emails.
-
-- Full Compatibility with Symfony 6.4: Tailored to integrate seamlessly with the latest Symfony framework.
 
 - Easy Docker Setup: Quick and straightforward installation and configuration using Docker.
 
@@ -20,6 +19,11 @@ Mail Catcher is designed to streamline email testing in your development workflo
 When the application detects the need to create or update your database, the web interface will block you on the maintenance page. It will ask you to define the "UPDATE_CODE" environment variable if you have not already done so and will make the necessary changes if you give it the "UPDATE_CODE".
 
 You can also just run the "composer update-database" command in the container at the root of the project if you don't want to work with the "UPDATE_CODE"
+
+## Create a new account
+Currently, the registration feature is disable and will be activated in the "Configuration" page. For now, you can create an account with the following command inside the container at the root of the project :
+
+`php bin/console app:user:create <email-address> <password>`
 
 ## Environment variables
 
@@ -150,6 +154,8 @@ services:
             MARIADB_PASSWORD: ${DATABASE_PASSWORD}
         networks:
             - database
+        volumes:
+            - ./volumes/mail-catcher/database/data:/var/lib/mysql
 
 networks:
     database:

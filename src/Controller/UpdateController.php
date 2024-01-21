@@ -27,7 +27,7 @@ class UpdateController extends AbstractController
         }
 
         $canConnectToDatabase = $databaseBusiness->canConnectToDatabase();
-        $mustCreateDatabase = true ?? !$databaseBusiness->doesDatabaseExist();
+        $mustCreateDatabase = !$canConnectToDatabase || !$databaseBusiness->doesDatabaseExist();
 
         if (!$mustCreateDatabase) {
             $mustMigrate = !empty($databaseBusiness->getMissingMigrations());
