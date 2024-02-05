@@ -4,16 +4,19 @@ namespace App\Controller;
 
 use App\Entity\Mail;
 use App\Form\Type\ConfirmType;
+use App\Utils\MailParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
 use Symfony\Component\Mailer\MailerInterface;
@@ -43,7 +46,7 @@ class MailController extends AbstractController
 
         return $this->json([
             'view' => $this->renderView('Page/Mail/show.html.twig', [
-                'mail' => $mail,
+                'parser' => new MailParser($mail),
             ]),
         ]);
     }
@@ -73,19 +76,41 @@ class MailController extends AbstractController
         if (null !== $profiler) {
             $profiler->disable();
         }
-        return new Response($mail->getHtml());
+
+        $parser = new MailParser($mail);
+        return new Response($parser->getHtml());
     }
 
     #[Route('/{id}/delete', name: 'app_mail_delete')]
     public function delete(EntityManagerInterface $entityManager, Mail $mail, Request $request): JsonResponse
     {
-            try {
-                $entityManager->remove($mail);
-                $entityManager->flush();
+        try {
+            $entityManager->remove($mail);
+            $entityManager->flush();
 
-                return new JsonResponse(['message' => 'Email supprimé avec succès!'], JsonResponse::HTTP_OK);
-            } catch (\Exception $e) {
-                return new JsonResponse(['message' => 'Erreur lors de la suppression de l\'email.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
-            }
+            return new JsonResponse(['message' => 'Email supprimé avec succès!'], JsonResponse::HTTP_OK);
+        } catch (\Exception) {
+            return new JsonResponse(['message' => 'Erreur lors de la suppression de l\'email.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/{id}/attachment/{number}', name: 'app_mail_attachment_download')]
+    public function downloadAttachment(Mail $mail, int $number): BinaryFileResponse
+    {
+        $parser = new MailParser($mail);
+        $attachment = $parser->getAttachments()[$number] ?? null;
+
+        if (null === $attachment) {
+            throw new NotFoundHttpException();
+        }
+
+        $tempFilePath = tempnam(sys_get_temp_dir(), 'attachment');
+        file_put_contents($tempFilePath, $attachment->getContent());
+
+
+        $response = $this->file($tempFilePath, $attachment->getFilename());
+        $response->deleteFileAfterSend();
+
+        return $response;
     }
 }

@@ -18,21 +18,6 @@ class RcptToMessageHandler extends AbstractAuthenticatedMessageHandler
 
     public function authenticatedHandle(string $data, Session $session): string
     {
-        try {
-            $validator = Validation::createValidator();
-            $emailConstraint = new EmailConstraint();
-            preg_match('/RCPT TO:<(.+?)>/', $data, $matches);
-            $emailAddress = $matches[1] ?? null;
-            $violations = $validator->validate($emailAddress, $emailConstraint);
-            if (0 !== count($violations)) {
-                throw new \Exception($violations->get(0)->getMessage());
-            }
-            $session->getMail()->addRecipient($emailAddress);
-
-            return '250 OK';
-
-        } catch (\Exception $exception) {
-            return '501 ' . $exception->getMessage();
-        }
+        return '250 OK';
     }
 }

@@ -9,7 +9,9 @@ use App\Form\Type\ConfirmType;
 use App\Form\Type\Inbox\CreateInboxType;
 use App\Form\Type\Inbox\UpdateInboxType;
 use App\Security\Voter\InboxVoter;
+use App\Utils\MailParser;
 use Doctrine\ORM\EntityManagerInterface;
+use PhpMimeMailParser\Parser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -66,14 +68,18 @@ class InboxController extends AbstractController
     #[IsGranted(InboxVoter::VIEW, 'inbox')]
     public function show(Inbox $inbox): Response
     {
-        $mails = $inbox->getMails()->toArray();
-        usort($mails, function (Mail $a, Mail $b) {
-            return $b->getSentAt() <=> $a->getSentAt();
+
+        $parsers = array_map(function(Mail $mail) {
+            return new MailParser($mail);
+        }, $inbox->getMails()->toArray());
+
+        usort($parsers, function (MailParser $a, MailParser $b) {
+            return $a->getDate() > $b->getDate();
         });
 
         return $this->render('Page/Inbox/show.html.twig', [
             'inbox' => $inbox,
-            'mails' => $mails,
+            'parsers' => $parsers,
         ]);
     }
 

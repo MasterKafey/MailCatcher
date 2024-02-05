@@ -2,9 +2,7 @@
 
 namespace App\SMTP\MessageHandler;
 
-use App\Entity\Mail;
 use App\SMTP\Session;
-use React\Socket\ConnectionInterface;
 
 class HeloMessageHandler extends AbstractMessageHandler
 {

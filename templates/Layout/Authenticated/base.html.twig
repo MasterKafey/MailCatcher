@@ -1,16 +1,14 @@
+{% set content_class = 'px-4 sm:px-6 lg:px-8' %}
 {% extends 'Layout/Default/base.html.twig' %}
 
 {% set body_class = 'bg-white' %}
 
 {% block body %}
     <div>
-        <!-- MENU FIXE POUR LA VERSION PC -->
         <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
             {% include 'Widget/Navigation/Sidebar/base.html.twig' %}
         </div>
-        <!-- FIN DU MENU FIXE POUR LA VERSION PC  -->
 
-        <!-- MENU BURGER POUR LES VERSIONS RESPONSIVE -->
         <div class="relative z-40 sticky top-0 flex items-center gap-x-6 bg-white px-4 py-4 shadow-sm sm:px-6 lg:hidden">
             <button type="button" class="relative z-50 -m-2.5 p-2.5 text-primary lg:hidden" id="burger-button">
                 <span class="sr-only">Open sidebar</span>
@@ -25,10 +23,9 @@
             </div>
             <div class="flex-1 text-sm font-semibold leading-6 text-white">Dashboard</div>
         </div>
-        <!-- FIN DU MENU BURGER POUR LES VERSIONS RESPONSIVE -->
 
-        <main class="py-10 lg:pl-72">
-            <div class="px-4 sm:px-6 lg:px-8">
+        <main class="lg:pl-72">
+            <div class="{{ content_class }}">
                 {% block content %}{% endblock content %}
             </div>
         </main>

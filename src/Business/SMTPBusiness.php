@@ -5,8 +5,6 @@ namespace App\Business;
 use App\Entity\Mail;
 use App\SMTP\MessageHandler\MessageHandlerInterface;
 use App\SMTP\Session;
-use PhpMimeMailParser\Parser;
-use React\Socket\ConnectionInterface;
 
 class SMTPBusiness
 {
@@ -39,26 +37,6 @@ class SMTPBusiness
 
     public function setData(Mail $mail): void
     {
-        $parser = new Parser();
-        $parser->setText($mail->getRaw());
-        $reflectionClass = new \ReflectionClass($mail);
-        foreach ($parser->getHeaders() as $name => $value) {
-            if ('date' === $name) {
-                $name = 'sentAt';
-                $value = new \DateTime($value);
-            } else if  ('cc' === $name) {
-                $value = explode(',', $value);
-                $value = array_map(function($emailAddress) {
-                    return trim($emailAddress);
-                }, $value);
-            }
-            $propertyName = lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $name))));
-            $reflectionProperty = $reflectionClass->getProperty($propertyName);
-            $reflectionProperty->setAccessible(true);
-            $reflectionProperty->setValue($mail, $value);
-        }
 
-        $mail->setText($parser->getMessageBody('text'));
-        $mail->setHtml($parser->getMessageBody('html'));
     }
 }

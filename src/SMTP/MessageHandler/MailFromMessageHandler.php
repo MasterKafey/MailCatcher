@@ -16,21 +16,6 @@ class MailFromMessageHandler extends AbstractAuthenticatedMessageHandler
 
     public function authenticatedHandle(string $data, Session $session): string
     {
-        try {
-            $validator = Validation::createValidator();
-            $emailConstraint = new EmailConstraint();
-            preg_match('/MAIL FROM:<(.+?)>/', $data, $matches);
-            $emailAddress = $matches[1] ?? null;
-            $violations = $validator->validate($emailAddress, $emailConstraint);
-            if (0 !== count($violations)) {
-                throw new \Exception($violations->get(0)->getMessage());
-            }
-
-            $session->getMail()->setFrom($emailAddress);
-
-        } catch (\Exception $exception) {
-            return "501 {$exception->getMessage()}";
-        }
         return '250 OK';
     }
 }

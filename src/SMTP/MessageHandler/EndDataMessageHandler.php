@@ -3,11 +3,9 @@
 namespace App\SMTP\MessageHandler;
 
 use App\Business\SMTPBusiness;
-use App\Entity\Mail;
 use App\SMTP\MessageHandler\Auth\AbstractAuthenticatedMessageHandler;
 use App\SMTP\Session;
 use Doctrine\ORM\EntityManagerInterface;
-use React\Socket\ConnectionInterface;
 
 class EndDataMessageHandler extends AbstractAuthenticatedMessageHandler
 {
