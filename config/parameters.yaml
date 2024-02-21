@@ -8,5 +8,3 @@ enable_registration:
         options: []
 
 parameters:
-    mailjet_api_key: '76d0e18bb22ff7d24031c787e6b7b6e3'
-    mailjet_api_secret: 'votre_api_secret'
