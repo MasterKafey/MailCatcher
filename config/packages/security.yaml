@@ -17,10 +17,11 @@ security:
                 login_path: app_authentication_login
                 check_path: app_authentication_login
             logout:
-                path: app_authentication_logout
+                path: /logout
 
     access_control:
-        - { path: ^/(login|update), roles: PUBLIC_ACCESS }
+        - { path: ^/(login|upgrade), roles: PUBLIC_ACCESS }
+        - { path: ^/template/send, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_USER }
 
 when@test:

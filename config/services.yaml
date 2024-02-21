@@ -1,6 +1,5 @@
 parameters:
-    upload_directory: '%kernel.project_dir%/public/images/upload'
-    upload_directory_video: '%kernel.project_dir%/public/videos/upload'
+    upload_directory: '%kernel.project_dir%/upload/files'
     domain_name: '%env(DOMAIN_NAME)%'
     database_name: '%env(DATABASE_NAME)%'
     smtp_address: '%env(SMTP_ADDRESS)%'
@@ -44,7 +43,7 @@ services:
 
     Doctrine\Migrations\DependencyFactory: '@doctrine.migrations.dependency_factory'
 
-    App\Business\UpdateBusiness:
+    App\Business\UpgradeBusiness:
         arguments:
             $updateCode: '%env(UPDATE_CODE)%'
 

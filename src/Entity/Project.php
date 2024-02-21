@@ -25,10 +25,14 @@ class Project
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: Inbox::class, cascade: ['remove'])]
     private Collection $inboxes;
 
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Template::class, cascade: ['remove'])]
+    private Collection $templates;
+
     public function __construct()
     {
         $this->members = new ArrayCollection();
         $this->inboxes = new ArrayCollection();
+        $this->templates = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -146,6 +150,17 @@ class Project
 
         $member->setRole(MemberRole::OWNER);
         $creator->setRole($nextMemberRole);
+        return $this;
+    }
+
+    public function getTemplates(): Collection
+    {
+        return $this->templates;
+    }
+
+    public function setTemplates(Collection $templates): self
+    {
+        $this->templates = $templates;
         return $this;
     }
 }

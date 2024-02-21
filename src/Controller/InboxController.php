@@ -5,14 +5,17 @@ namespace App\Controller;
 use App\Entity\Inbox;
 use App\Entity\Mail;
 use App\Entity\Project;
+use App\Entity\User;
 use App\Form\Type\ConfirmType;
 use App\Form\Type\Inbox\CreateInboxType;
 use App\Form\Type\Inbox\UpdateInboxType;
 use App\Security\Voter\InboxVoter;
+use App\Security\Voter\ProjectVoter;
 use App\Utils\MailParser;
 use Doctrine\ORM\EntityManagerInterface;
 use PhpMimeMailParser\Parser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -22,21 +25,34 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route(path: '/inbox')]
 class InboxController extends AbstractController
 {
-    #[Route(path: '/create', name: 'app_inbox_create')]
+    #[Route(path: '/create/{id}', name: 'app_inbox_create', defaults: ['id' => null])]
     public function create(
         Request                $request,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        Project $project = null
     ): Response
     {
-        $projects = $entityManager->getRepository(Project::class)->findByUser($this->getUser());
+        $user = $this->getUser();
 
-        if (empty($projects)) {
-            return $this->render('Page/Project/no_project.html.twig');
+        if (!$user instanceof User) {
+            throw new AccessDeniedException();
+        }
+
+        $parameters = [];
+        if ($project === null) {
+            $projects = $entityManager->getRepository(Project::class)->findByUser($user);
+
+            if (empty($projects)) {
+                return $this->render('Page/Project/no_project.html.twig');
+            }
+            $parameters['projects'] = $project;
+        } else {
+            $this->denyAccessUnlessGranted(ProjectVoter::UPDATE, $project);
         }
 
         $inbox = new Inbox();
         $form = $this
-            ->createForm(CreateInboxType::class, $inbox, ['projects' => $projects])
+            ->createForm(CreateInboxType::class, $inbox, $parameters)
             ->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -58,7 +74,13 @@ class InboxController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
-        $inboxes = $entityManager->getRepository(Inbox::class)->findByUser($this->getUser());
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            throw new AccessDeniedException();
+        }
+
+        $inboxes = $entityManager->getRepository(Inbox::class)->findByUser($user);
         return $this->render('Page/Inbox/list.html.twig', [
             'inboxes' => $inboxes,
         ]);
@@ -87,7 +109,13 @@ class InboxController extends AbstractController
     #[IsGranted(InboxVoter::EDIT, 'inbox')]
     public function update(Inbox $inbox, Request $request, EntityManagerInterface $entityManager): Response
     {
-        $projects = $entityManager->getRepository(Project::class)->findByUser($this->getUser());
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            throw new AccessDeniedException();
+        }
+
+        $projects = $entityManager->getRepository(Project::class)->findByUser($user);
 
         $form = $this
             ->createForm(UpdateInboxType::class, $inbox, ['projects' => $projects])

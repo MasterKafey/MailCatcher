@@ -34,3 +34,8 @@
         </main>
     </div>
 {% endblock body %}
+
+{% block javascripts_html %}
+    {{ encore_entry_link_tags('scripts/navbar') }}
+    {% block javascripts %}{% endblock javascripts %}
+{% endblock javascripts_html %}

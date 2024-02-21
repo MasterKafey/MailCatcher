@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Form\Type\Update;
+namespace App\Form\Type\Upgrade;
 
 use App\Form\Model\Update\UpdateCodeModel;
 use Symfony\Component\Form\AbstractType;
@@ -8,7 +8,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class UpdateCodeType extends AbstractType
+class UpgradeCodeType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {

@@ -39,7 +39,7 @@ class ProjectVoter extends Voter
 
         $member = $subject->getMemberByUser($user);
 
-        if ($member->getStatus() !== MemberStatus::ACCEPTED) {
+        if ($member === null || $member->getStatus() !== MemberStatus::ACCEPTED) {
             return false;
         }
 

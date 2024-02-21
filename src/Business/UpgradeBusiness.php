@@ -2,7 +2,7 @@
 
 namespace App\Business;
 
-class UpdateBusiness
+class UpgradeBusiness
 {
     public function __construct(
         private readonly DatabaseBusiness $databaseBusiness,

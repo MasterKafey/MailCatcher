@@ -138,16 +138,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function uploadVideo(file) {
         var formData = new FormData();
-        formData.append('video', file);
+        formData.append('file', file);
 
-        fetch('/upload/video', {
+        fetch('/upload', {
             method: 'POST',
             body: formData
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    tinymce.activeEditor.execCommand('mceInsertContent', false, '<video data-mce-src="' + data.videoPath + '" src="' + data.videoPath + '" controls></video>');
+                    tinymce.activeEditor.execCommand('mceInsertContent', false, '<video data-mce-src="' + data.path + '" src="' + data.path + '" controls></video>');
                 } else {
                     console.error('Erreur lors du téléchargement de la vidéo : ' + data.error);
                 }
@@ -156,7 +156,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Erreur lors du téléchargement de la vidéo : ' + error.message);
             });
     }
-
 
     // -----------------------------------------OPTION AJOUTER SEPARATEUR-----------------------------------------------------------------
 
@@ -306,17 +305,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // -----------------------------------------OPTION AJOUTER IMAGE-----------------------------------------------------------------
     function uploadImage(file) {
-        const formData = new FormData();
-        formData.append('image', file);
+        var formData = new FormData();
+        formData.append('file', file);
 
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const imageData = event.target.result;
-
-            // Insertion de l'image directement dans la balise src
-            tinymce.activeEditor.execCommand('mceInsertContent', false, `<img class="editor img" src="${imageData}" alt="Nouvelle image">`);
-        };
-        reader.readAsDataURL(file);
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    tinymce.activeEditor.execCommand('mceInsertContent', false, '<img data-mce-src="' + data.path + '" src="' + data.path + '">');
+                } else {
+                    console.error('Erreur lors du téléchargement de l\'image : ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors du téléchargement de l\'image : ' + error.message);
+            });
     }
 
 

@@ -15,14 +15,17 @@ class CreateInboxType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('name', TextType::class)
-            ->add('project', EntityType::class, [
-                'class' => Project::class,
-                'required' => true,
-                'choices' => $options['projects'],
-                'choice_label' => 'name'
-            ])
-        ;
+            ->add('name', TextType::class);
+
+        if (!empty($options['projects'])) {
+            $builder
+                ->add('project', EntityType::class, [
+                    'class' => Project::class,
+                    'required' => true,
+                    'choices' => $options['projects'],
+                    'choice_label' => 'name'
+                ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void

@@ -2,20 +2,20 @@
 
 namespace App\Entity;
 
-use App\Repository\TemplatedEmailRepository;
+use App\Repository\TemplateRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
 
-#[ORM\Entity(repositoryClass: TemplatedEmailRepository::class)]
-class TemplatedEmail
+#[ORM\Entity(repositoryClass: TemplateRepository::class)]
+class Template
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME, unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    private ?string $id = null;
 
-    #[ORM\Column(type: Types::STRING, nullable: false)]
-    private ?string $recipient = null;
     #[ORM\Column(type: Types::STRING, nullable: false)]
     private ?string $name = null;
     #[ORM\Column(type: Types::STRING, nullable: false)]
@@ -24,24 +24,13 @@ class TemplatedEmail
     #[ORM\Column(type: Types::TEXT)]
     private ?string $body = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'templatedEmails')]
+    #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: 'templates')]
     #[ORM\JoinColumn(nullable: false)]
-    private $user;
+    private ?Project $project = null;
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
         return $this->id;
-    }
-
-    public function getRecipient(): string
-    {
-        return $this->recipient;
-    }
-
-    public function setRecipient(string $recipient): self
-    {
-        $this->recipient = $recipient;
-        return $this;
     }
 
     public function getName(): ?string
@@ -77,15 +66,14 @@ class TemplatedEmail
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getProject(): ?Project
     {
-        return $this->user;
+        return $this->project;
     }
 
-    public function setUser(?User $user): self
+    public function setProject(?Project $project): self
     {
-        $this->user = $user;
-
+        $this->project = $project;
         return $this;
     }
 }

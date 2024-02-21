@@ -12,6 +12,6 @@
 <body class="h-full {{ body_class|default }}">
     {% block body %}{% endblock body %}
     {{ encore_entry_script_tags('app') }}
-    {% block javascripts %}{% endblock javascripts %}
+    {% block javascripts_html %}{% block javascripts %}{% endblock javascripts %}{% endblock javascripts_html %}
 </body>
 </html>

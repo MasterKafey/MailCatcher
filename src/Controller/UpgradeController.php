@@ -3,23 +3,23 @@
 namespace App\Controller;
 
 use App\Business\DatabaseBusiness;
-use App\Business\UpdateBusiness;
+use App\Business\UpgradeBusiness;
 use App\Form\Model\Update\UpdateCodeModel;
-use App\Form\Type\Update\UpdateCodeType;
+use App\Form\Type\Upgrade\UpgradeCodeType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/update')]
-class UpdateController extends AbstractController
+#[Route('/upgrade')]
+class UpgradeController extends AbstractController
 {
-    #[Route('/database')]
+    #[Route('/database', name: 'app_upgrade_database')]
     public function database(
         DatabaseBusiness $databaseBusiness,
         Request $request,
-        UpdateBusiness $updateBusiness
+        UpgradeBusiness $upgradeBusiness
     ): Response
     {
         if ($databaseBusiness->upToDate()) {
@@ -36,10 +36,10 @@ class UpdateController extends AbstractController
         }
 
         $model = new UpdateCodeModel();
-        $form = $this->createForm(UpdateCodeType::class, $model)->handleRequest($request);
+        $form = $this->createForm(UpgradeCodeType::class, $model)->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid() && $canConnectToDatabase) {
-            if ($model->getCode() !== $updateBusiness->getUpdateCode()) {
+            if ($model->getCode() !== $upgradeBusiness->getUpdateCode()) {
                 $form->get('code')->addError(new FormError('Le code ne correspond pas à la variable d\'environement "CODE_UPDATE"'));
             } else {
                 $databaseBusiness->update();
@@ -56,7 +56,7 @@ class UpdateController extends AbstractController
         ]);
     }
 
-    #[Route('/missing-update-code', name: 'app_update_missing_update_code')]
+    #[Route('/missing-update-code', name: 'app_upgrade_missing_update_code')]
     public function missingUpdateCode(DatabaseBusiness $databaseBusiness): Response
     {
         if ($databaseBusiness->upToDate()) {

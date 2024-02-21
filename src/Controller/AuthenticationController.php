@@ -30,13 +30,6 @@ class AuthenticationController extends AbstractController
         ]);
     }
 
-    #[NoReturn]
-    #[Route(path: '/logout', name: 'app_authentication_logout')]
-    public function logout(): void
-    {
-        throw new \RuntimeException('Should never be called');
-    }
-
     #[Route(path: '/register')]
     public function register(
         Request                $request,

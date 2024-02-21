@@ -3,23 +3,16 @@
 namespace App\Controller;
 
 use App\Entity\Mail;
-use App\Form\Type\ConfirmType;
 use App\Utils\MailParser;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Container\ContainerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Container;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Mime\Address;
@@ -55,44 +48,46 @@ class MailController extends AbstractController
     #[Route(path: '/send/{id}', name: 'app_mail_send')]
     public function sendMail(Mail $mail, MailerInterface $mailer): JsonResponse
     {
+        $mail = new MailParser($mail);
+
+        $email = (new Email())
+            ->from(new Address($mail->getFrom()))
+            ->to(new Address($mail->getTo()))
+            ->subject($mail->getSubject())
+            ->text($mail->getText())
+            ->html($mail->getHtml())
+        ;
+
         try {
-            $email = (new Email())
-                ->from(new Address($mail->getFrom()))
-                ->to(new Address($mail->getTo()))
-                ->subject($mail->getSubject())
-                 ->text($mail->getText())
-                ->html($mail->getHtml());
 
             $mailer->send($email);
-
-            return new JsonResponse(['message' => 'Mail envoyé avec succès!'], JsonResponse::HTTP_OK);
-        } catch (\Exception $e) {
-            return new JsonResponse(['message' => 'Erreur lors de l\'envoi du mail.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (TransportExceptionInterface $exception) {
+            return $this->json([
+                'result' => false,
+                'errors' => [
+                    $exception->getMessage()
+                ],
+            ]);
         }
+        return $this->json(['result' => true]);
     }
 
     #[Route(path: '/{id}/content', name: 'app_mail_show_content')]
     public function content(Mail $mail, ?Profiler $profiler = null): Response
     {
-        if (null !== $profiler) {
-            $profiler->disable();
-        }
+        $profiler?->disable();
 
         $parser = new MailParser($mail);
         return new Response($parser->getHtml());
     }
 
     #[Route('/{id}/delete', name: 'app_mail_delete')]
-    public function delete(EntityManagerInterface $entityManager, Mail $mail, Request $request): JsonResponse
+    public function delete(EntityManagerInterface $entityManager, Mail $mail): JsonResponse
     {
-        try {
-            $entityManager->remove($mail);
-            $entityManager->flush();
+        $entityManager->remove($mail);
+        $entityManager->flush();
 
-            return new JsonResponse(['message' => 'Email supprimé avec succès!'], JsonResponse::HTTP_OK);
-        } catch (\Exception) {
-            return new JsonResponse(['message' => 'Erreur lors de la suppression de l\'email.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        return $this->json(['result' => true]);
     }
 
     #[Route('/{id}/attachment/{number}', name: 'app_mail_attachment_download')]

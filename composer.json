@@ -26,6 +26,7 @@
         "symfony/security-bundle": "6.4.*",
         "symfony/translation": "6.4.*",
         "symfony/twig-bundle": "6.4.*",
+        "symfony/uid": "6.4.*",
         "symfony/validator": "6.4.*",
         "symfony/webpack-encore-bundle": "^2.1",
         "symfony/yaml": "6.4.*",
@@ -73,7 +74,19 @@
         ],
         "update-database": [
             "php bin/console doctrine:database:create --if-not-exists",
-            "php bin/console doctrine:migrations:migrate"
+            "php bin/console doctrine:migrations:migrate --allow-no-migration"
+        ],
+        "reset-database": [
+            "php bin/console doctrine:database:drop --force --if-exists",
+            "@update-database"
+        ],
+        "create-migration": [
+            "@reset-database",
+            "php bin/console doctrine:migration:diff"
+        ],
+        "fixtures": [
+            "@reset-database",
+            "php bin/console doctrine:fixtures:load --no-interaction"
         ]
     },
     "conflict": {

@@ -6,6 +6,7 @@ use App\Entity\Member;
 use App\Entity\MemberRole;
 use App\Entity\MemberStatus;
 use App\Entity\Project;
+use App\Entity\User;
 use App\Form\Type\ConfirmType;
 use App\Form\Type\Member\CreateMemberType;
 use App\Form\Type\Member\UpdateMemberType;
@@ -52,7 +53,14 @@ class MemberController extends AbstractController
     ): Response
     {
         $this->denyAccessUnlessGranted(MemberVoter::UPDATE, $member);
-        $currentMember = $member->getProject()->getMemberByUser($this->getUser());
+
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            throw new AccessDeniedException();
+        }
+
+        $currentMember = $member->getProject()->getMemberByUser($user);
 
         $form = $this
             ->createForm(UpdateMemberType::class, $member, ['current_role' => $currentMember->getRole()])
