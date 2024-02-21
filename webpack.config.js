@@ -1,4 +1,26 @@
 const Encore = require('@symfony/webpack-encore');
+//DECLARATION OF THE NEW PLUGIN
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+const config = {
+    module: {
+        loaders: [
+            {
+                test: require.resolve('tinymce/tinymce'),
+                loaders: [
+                    'imports?this=>window',
+                    'exports?window.tinymce'
+                ]
+            },
+            {
+                test: /tinymce\/(themes|plugins)\//,
+                loaders: [
+                    'imports?this=>window'
+                ]
+            }
+        ]
+    }
+}
 
 // Manually configure the runtime environment if not already configured yet by the "encore" command.
 // It's useful when you use tools that rely on webpack.config.js file.
@@ -21,6 +43,7 @@ Encore
      * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
      */
     .addEntry('app', './assets/app.js')
+    .addEntry('scripts/tiny-mce', './assets/scripts/tiny-mce.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
@@ -69,6 +92,14 @@ Encore
 
 // uncomment if you're having problems with a jQuery plugin
 //.autoProvidejQuery()
+
+    .addPlugin(new CopyWebpackPlugin({
+        patterns: [
+            // Copy the skins from tinymce to the build/skins directory
+            { from: 'node_modules/tinymce/skins', to: 'skins' },
+        ],
+    }))
+
 ;
 
 module.exports = Encore.getWebpackConfig();

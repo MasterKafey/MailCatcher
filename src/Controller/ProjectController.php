@@ -82,7 +82,6 @@ class ProjectController extends AbstractController
     {
         $user = $this->getUser();
         $projects = $entityManager->getRepository(Project::class)->findByUser($user);
-
         $acceptedProjects = [];
         $pendingProjects = [];
 

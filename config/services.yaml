@@ -1,4 +1,6 @@
 parameters:
+    upload_directory: '%kernel.project_dir%/public/images/upload'
+    upload_directory_video: '%kernel.project_dir%/public/videos/upload'
     domain_name: '%env(DOMAIN_NAME)%'
     database_name: '%env(DATABASE_NAME)%'
     smtp_address: '%env(SMTP_ADDRESS)%'

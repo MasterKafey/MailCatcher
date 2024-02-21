@@ -1,0 +1,65 @@
+{% extends 'Layout/Authenticated/base.html.twig' %}
+
+{% block content %}
+    <div class="px-4 sm:px-6 lg:px-8">
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-base font-semibold leading-6">Template</h1>
+                <p class="mt-2 text-sm text-gray-700">Une liste de toute les templates de votre compte</p>
+            </div>
+            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                <a href="{{ path('app_template_create') }}" type="button"
+                   class="block rounded-md bg-secondary px-3 py-2 text-center text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                         stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        <div class="mt-8 flow-root">
+            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-primary">
+                            <thead class="bg-secondary text-white">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6">Nom du template
+                                </th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Sujet</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Destinataire</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Action</th>
+                            </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                            {% for template in templates %}
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6">
+                                        <a href="{{ path('app_template_show', {'id': template.id}) }}" class="hover:underline text-primary">
+                                            {{ template.name }}
+                                        </a>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ template.subject }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ template.recipient }}</td>
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-sm font-medium sm:pr-6 flex justify-between">
+                                            <a href="{{ path('app_template_edit', {'id': template.id}) }}" class="text-indigo-600 hover:text-indigo-900">Modifier</a>
+                                        <a href="{{ path('app_template_delete', {'id': template.id}) }}" class="hover:text-red-300 text-red-500">Supprimer la template</a>
+
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 text-sm font-medium text-center" colspan="6">
+                                        Aucune template configuré
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

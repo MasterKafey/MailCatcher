@@ -7,6 +7,7 @@ use App\Form\Type\ConfirmType;
 use App\Utils\MailParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -59,7 +60,7 @@ class MailController extends AbstractController
                 ->from(new Address($mail->getFrom()))
                 ->to(new Address($mail->getTo()))
                 ->subject($mail->getSubject())
-                ->text($mail->getText())
+                 ->text($mail->getText())
                 ->html($mail->getHtml());
 
             $mailer->send($email);

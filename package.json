@@ -4,6 +4,7 @@
     "@babel/preset-env": "^7.16.0",
     "@symfony/webpack-encore": "^4.0.0",
     "autoprefixer": "^10.4.16",
+    "copy-webpack-plugin": "^12.0.2",
     "core-js": "^3.23.0",
     "postcss": "^8.4.32",
     "postcss-loader": "^7.3.3",
@@ -20,7 +21,10 @@
     "build": "encore production --progress"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^41.0.0",
     "@tailwindcss/forms": "^0.5.7",
-    "jquery": "^3.7.1"
+    "flowbite": "^2.2.1",
+    "jquery": "^3.7.1",
+    "tinymce": "^6.8.2"
   }
 }
