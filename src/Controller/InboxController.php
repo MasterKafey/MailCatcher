@@ -39,6 +39,7 @@ class InboxController extends AbstractController
         }
 
         $parameters = [];
+        $inbox = new Inbox();
         if ($project === null) {
             $projects = $entityManager->getRepository(Project::class)->findByUser($user);
 
@@ -48,9 +49,9 @@ class InboxController extends AbstractController
             $parameters['projects'] = $project;
         } else {
             $this->denyAccessUnlessGranted(ProjectVoter::UPDATE, $project);
+            $inbox->setProject($project);
         }
 
-        $inbox = new Inbox();
         $form = $this
             ->createForm(CreateInboxType::class, $inbox, $parameters)
             ->handleRequest($request);
