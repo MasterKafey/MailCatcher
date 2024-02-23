@@ -36,9 +36,17 @@ RUN chown -R www-data:www-data /var/www/html
 
 WORKDIR /var/www/html
 
+RUN groupadd -r mail-catcher && useradd -r -g mail-catcher mail-catcher \
+    && mkdir -p /var/www/html \
+    && chown -R mail-catcher:mail-catcher /var/www/html
+
+USER mail-catcher
 RUN composer install --no-dev --optimize-autoloader
+USER root
+
 RUN npm install
 RUN npm run build
+
 
 EXPOSE 80
 
