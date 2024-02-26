@@ -31,6 +31,7 @@ Encore
     .setPublicPath('/build')
     .addEntry('app', './assets/app.js')
     .addEntry('scripts/tiny-mce', './assets/scripts/tiny-mce.js')
+    .addEntry('scripts/template_script', './assets/scripts/template_script')
     .addEntry('scripts/navbar', './assets/scripts/navbar.js')
     .addEntry('scripts/inbox', './assets/scripts/inbox.js')
     .splitEntryChunks()

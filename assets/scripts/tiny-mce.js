@@ -5,7 +5,6 @@ import 'tinymce/models/dom/model'
 import 'tinymce/icons/default/icons'
 import 'tinymce/skins/ui/oxide/skin'
 import 'tinymce/skins/ui/oxide/content'
-
 document.addEventListener('DOMContentLoaded', function () {
     tinymce.init({
         selector: '.editor',
@@ -35,6 +34,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function boldText() {
         tinymce.activeEditor.execCommand('bold');
+    }
+
+    // -----------------------------------------OPTION COULEUR PICKER-----------------------------------------------------------------
+
+    document.getElementById('colorPicker').addEventListener('input', function (event) {
+        var color = event.target.value;
+        changeTextColor(color);
+    });
+
+    function changeTextColor(color) {
+        tinymce.activeEditor.execCommand('forecolor', false, color);
     }
 
     // -----------------------------------------OPTION ITALIQUE-----------------------------------------------------------------
@@ -96,6 +106,43 @@ document.addEventListener('DOMContentLoaded', function () {
     function justifyRight() {
         tinymce.activeEditor.execCommand('JustifyRight');
     }
+
+    // -----------------------------------------OPTION PREVIEW-----------------------------------------------------------------
+    var previewButton = document.getElementById('previewButton');
+
+    // Récupérer la fenêtre modale et son contenu
+    var previewModal = document.getElementById('previewModal');
+    var previewContent = document.getElementById('previewContent');
+
+    // Ajouter un écouteur d'événement au clic sur le bouton d'aperçu
+    previewButton.addEventListener('click', function (event) {
+        // Empêcher le comportement par défaut du bouton (éviter de soumettre un formulaire ou de suivre un lien)
+        event.preventDefault();
+
+        // Récupérer l'iframe
+        var iframe = document.getElementById('create_template_body_ifr');
+
+        // Vérifier si l'iframe a été trouvé
+        if (iframe) {
+            // Récupérer le contenu de l'iframe
+            var iframeContent = iframe.contentDocument || iframe.contentWindow.document;
+
+            // Insérer le contenu de l'iframe dans la fenêtre modale
+            previewContent.innerHTML = iframeContent.body.innerHTML;
+
+            // Afficher la fenêtre modale
+            previewModal.classList.remove('hidden');
+        } else {
+            console.error("iframe not found");
+        }
+    });
+
+    // Ajouter un écouteur d'événement au clic sur le bouton de fermeture
+    var closePreviewButton = document.getElementById('closeButton');
+    closePreviewButton.addEventListener('click', function () {
+        // Masquer la fenêtre modale
+        previewModal.classList.add('hidden');
+    });
 
     // -----------------------------------------OPTION AJOUTER BOUTON-----------------------------------------------------------------
 
@@ -486,5 +533,4 @@ document.addEventListener('DOMContentLoaded', function () {
             event.target.click();
         });
     });
-
 });

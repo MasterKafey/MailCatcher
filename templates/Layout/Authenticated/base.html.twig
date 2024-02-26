@@ -1,6 +1,5 @@
-{% set content_class = 'px-4 sm:px-6 lg:px-8' %}
+{% set content_class = app.request.attributes.get('_route') == 'app_template_create' ? '' : 'px-4 sm:px-6 lg:px-8' %}
 {% extends 'Layout/Default/base.html.twig' %}
-
 {% set body_class = 'bg-white' %}
 
 {% block body %}

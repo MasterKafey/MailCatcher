@@ -38,6 +38,7 @@ class TemplateController extends AbstractController
 
         return $this->render('Page/Template/create.html.twig', [
             'form' => $form->createView(),
+            'project' => $project,
         ]);
     }
 
@@ -53,7 +54,7 @@ class TemplateController extends AbstractController
     }
 
     #[Route(path: '/{id}', name: 'app_template_show')]
-    public function show(Template $template, Request $request): Response
+    public function show(Template $template): Response
     {
         return $this->render('Page/Template/show.html.twig', [
             'template' => $template,

@@ -1,537 +1,616 @@
 {% extends 'Layout/Authenticated/base.html.twig' %}
 {% block javascripts %}
     {{ encore_entry_script_tags('scripts/tiny-mce') }}
+    {{ encore_entry_script_tags('scripts/template_script') }}
 {% endblock javascripts %}
 {% block content %}
-    <h3 class="font-semibold leading-2 text-gray-900 text-2xl">Créer une template</h3>
-
     {{ form_start(form) }}
-    <p class="block font-medium text-gray-700 mt-2 mb-2">{{ form_label(form.name, 'Nom du template') }}</p>
-    {{ form_widget(form.name, {'attr': {'class': 'w-full mt-1 form-input rounded-md shadow-sm'}}) }}
-    <p class="block font-medium text-gray-700 mt-2 mb-2">{{ form_label(form.subject, 'Sujet') }}</p>
-    {{ form_widget(form.subject, {'attr': {'class': 'w-full mt-1 form-input rounded-md shadow-sm'}}) }}
-    <div class="mt-4 grid grid-cols-4 gap-4">
-    <div class="col-span-1">
-        <div id="toolbar flex-col">
-            <div id="accordion-collapse" data-accordion="collapse">
-                <h2 id="accordion-collapse-heading-1">
-                    <button type="button"
-                            class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-b-0 border-gray-200 rounded-t-xl dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3"
-                            data-accordion-target="#accordion-collapse-body-1" aria-expanded="false"
-                            aria-controls="accordion-collapse-body-1">
-                        <span>Contenu</span>
-                        <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
-                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                  stroke-width="2" d="M9 5 5 1 1 5"/>
+    <!-- Modal -->
+    <div id="previewModal" class="fixed inset-0 flex items-center justify-center bg-white w-full h-full z-50 hidden">
+        <button id="closeButton" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <div class="preview_template mx-auto p-6 relative">
+            <!-- Contenu de la modal -->
+            <div class="h-full overflow-y-auto">
+                <div class="text-lg font-bold mb-4">Aperçu</div>
+                <div id="previewContent"></div>
+            </div>
+        </div>
+    </div>
+    <div class="bg-secondary py-4 px-4 grid grid-cols-4">
+        <div class="col-span-1">
+            <a href="{{ path('app_project_show', {'id': project.id}) }}"
+               class=" inline-flex rounded-md text-white hover:bg-red-700 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="w-6 h-6 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+        <div class="col-span-3 justify-self-end">
+            <button id="previewButton" class="mr-5 inline-flex rounded-md text-white hover:bg-red-700 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="w-6 h-6 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                </svg>
+                Aperçu
+            </button>
+            <button type="submit" class=" inline-flex rounded-md text-white hover:bg-red-700 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="w-6 h-6 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/>
+                </svg>
+                Sauvegarder
+            </button>
+        </div>
+    </div>
+    <div class="border-bottom grid grid-cols-4">
+        <div id="testmsg" class="col-span-1 border-right">
+        </div>
+        <div id="template_name" class="ml-3 col-span-3 self-center">
+        </div>
+    </div>
+    <div>
+    <div class="grid grid-cols-4">
+        <div class="col-span-1">
+            <div class="hidden-div bg-white rounded-lg shadow-md p-6" id="hiddenDiv" style="display:none">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Insérez le nom et le sujet de la template</h3>
+                    <button id="close-button" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
-                </h2>
-                <div id="accordion-collapse-body-1" class="hidden" aria-labelledby="accordion-collapse-heading-1">
-                    <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700">
-                        <div class="flex flex-wrap -mx-2 mb-2">
-                            <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
-                                <button id="titleButton"
-                                        class="w-full button flex flex-col items-center justify-center"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="0 0 20 20"
-                                         xmlns="http://www.w3.org/2000/svg" fill="#010713">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path d="M3 2a1 1 0 00-1 1v3a1 1 0 002 0 2 2 0 012-2h2v10.999A1 1 0 017 16h-.001A1 1 0 007 18h6a1 1 0 100-2 1 1 0 01-1-1V4h2a2 2 0 012 2 1 1 0 102 0V3a1 1 0 00-1-1H3z"
-                                                  fill="#010713"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Titre</span>
-                                </button>
-
-                            </div>
-                            <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
-                                <button id="paragraphButton"
-                                        class="w-full button flex flex-col items-center justify-center"
-                                        draggable="true">
-                                    <svg fill="#010713" width="48px" height="48px" viewBox="0 0 24 24"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path d="M2,12H5a1,1,0,0,0,0-2H4.635l.586-1.692H8.779L9.365,10H9a1,1,0,0,0,0,2h3a1,1,0,0,0,0-2h-.518L8.945,2.673A1,1,0,0,0,8,2H6a1,1,0,0,0-.945.673L2.518,10H2a1,1,0,0,0,0,2ZM6.712,4h.576l.8,2.308H5.913ZM23,4a1,1,0,0,1-1,1H15a1,1,0,0,1,0-2h7A1,1,0,0,1,23,4Zm0,6a1,1,0,0,1-1,1H15a1,1,0,0,1,0-2h7A1,1,0,0,1,23,10Zm0,5a1,1,0,0,1-1,1H2a1,1,0,0,1,0-2H22A1,1,0,0,1,23,15Zm0,6a1,1,0,0,1-1,1H2a1,1,0,0,1,0-2H22A1,1,0,0,1,23,21Z"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Paragraphe</span>
-                                </button>
-
-                            </div>
+                </div>
+                <hr class="mb-4 border-t border-gray-200">
+                <div class="px-2">
+                    <div class="mb-4">
+                        <label for="template_name" class="block text-gray-700 font-medium mb-2">Nom du template</label>
+                        {{ form_widget(form.name, {'attr': {'class': 'w-full mt-1 form-input rounded-md shadow-sm', 'value': 'Template #123'}}) }}
+                    </div>
+                    <div class="mb-4">
+                        <label for="subject" class="block text-gray-700 font-medium mb-2">Sujet</label>
+                        <div class="relative">
+                            {{ form_widget(form.subject, {'attr': {'class': 'w-full mt-1 form-input rounded-md shadow-sm'}}) }}
+                            <select id="codeSelect" class="absolute inset-y-0 right-0 pr-3 mt-1 form-select rounded-md shadow-sm">
+                                <option value="">Insérer une variable</option>
+                                <option value="code1">Code 1</option>
+                                <option value="code2">Code 2</option>
+                            </select>
                         </div>
-                        <div class="flex flex-wrap -mx-2 mb-2">
-                            <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
-                                <button id="buttonButton"
-                                        class="w-full button flex flex-col items-center justify-center"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                  d="M12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22ZM9.198 7.25H9.30203C10.2005 7.24997 10.9497 7.24995 11.5445 7.32991C12.1723 7.41432 12.7391 7.59999 13.1945 8.05546C13.65 8.51093 13.8357 9.07773 13.9201 9.70552C14.0001 10.3003 14 11.0495 14 11.948L14 12C14 12.4142 13.6642 12.75 13.25 12.75C12.8358 12.75 12.5 12.4142 12.5 12C12.5 11.036 12.4984 10.3884 12.4335 9.9054C12.3714 9.44393 12.2642 9.24644 12.1339 9.11612C12.0036 8.9858 11.8061 8.87858 11.3446 8.81654C10.8616 8.7516 10.214 8.75 9.25 8.75C8.28599 8.75 7.63843 8.7516 7.15539 8.81654C6.69393 8.87858 6.49644 8.9858 6.36612 9.11612C6.2358 9.24644 6.12858 9.44393 6.06654 9.9054C6.0016 10.3884 6 11.036 6 12C6 12.964 6.0016 13.6116 6.06654 14.0946C6.12858 14.5561 6.2358 14.7536 6.36612 14.8839C6.49644 15.0142 6.69393 15.1214 7.15539 15.1835C7.63843 15.2484 8.28599 15.25 9.25 15.25C9.66422 15.25 10 15.5858 10 16C10 16.4142 9.66422 16.75 9.25 16.75L9.19798 16.75C8.29951 16.75 7.5503 16.7501 6.95552 16.6701C6.32773 16.5857 5.76093 16.4 5.30546 15.9445C4.84999 15.4891 4.66432 14.9223 4.57991 14.2945C4.49995 13.6997 4.49997 12.9505 4.5 12.052V11.948C4.49997 11.0495 4.49995 10.3003 4.57991 9.70552C4.66432 9.07773 4.84999 8.51093 5.30546 8.05546C5.76093 7.59999 6.32773 7.41432 6.95552 7.32991C7.55029 7.24995 8.29954 7.24997 9.198 7.25ZM16.8446 8.81654C16.3616 8.7516 15.714 8.75 14.75 8.75C14.3358 8.75 14 8.41422 14 8C14 7.58579 14.3358 7.25 14.75 7.25L14.802 7.25C15.7005 7.24997 16.4497 7.24995 17.0445 7.32991C17.6723 7.41432 18.2391 7.59999 18.6945 8.05546C19.15 8.51093 19.3357 9.07773 19.4201 9.70552C19.5001 10.3003 19.5 11.0495 19.5 11.9479V12.052C19.5 12.9505 19.5001 13.6997 19.4201 14.2945C19.3357 14.9223 19.15 15.4891 18.6945 15.9445C18.2391 16.4 17.6723 16.5857 17.0445 16.6701C16.4497 16.7501 15.7005 16.75 14.802 16.75H14.698C13.7995 16.75 13.0503 16.7501 12.4555 16.6701C11.8277 16.5857 11.2609 16.4 10.8055 15.9445C10.35 15.4891 10.1643 14.9223 10.0799 14.2945C9.99995 13.6997 9.99997 12.9505 10 12.052L10 12C10 11.5858 10.3358 11.25 10.75 11.25C11.1642 11.25 11.5 11.5858 11.5 12C11.5 12.964 11.5016 13.6116 11.5665 14.0946C11.6286 14.5561 11.7358 14.7536 11.8661 14.8839C11.9964 15.0142 12.1939 15.1214 12.6554 15.1835C13.1384 15.2484 13.786 15.25 14.75 15.25C15.714 15.25 16.3616 15.2484 16.8446 15.1835C17.3061 15.1214 17.5036 15.0142 17.6339 14.8839C17.7642 14.7536 17.8714 14.5561 17.9335 14.0946C17.9984 13.6116 18 12.964 18 12C18 11.036 17.9984 10.3884 17.9335 9.9054C17.8714 9.44393 17.7642 9.24644 17.6339 9.11612C17.5036 8.9858 17.3061 8.87858 16.8446 8.81654Z"
-                                                  fill="#010713"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Bouton</span>
-                                </button>
+                    </div>
+                </div>
+            </div>
+            <div id="toolbar flex-col">
+                <div id="accordion-collapse" data-accordion="collapse">
+                    <h2 id="accordion-collapse-heading-1">
+                        <button type="button"
+                                class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-b-0 border-gray-200 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3"
+                                data-accordion-target="#accordion-collapse-body-1" aria-expanded="false"
+                                aria-controls="accordion-collapse-body-1">
+                            <span>Contenu</span>
+                            <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="2" d="M9 5 5 1 1 5"/>
+                            </svg>
+                        </button>
+                    </h2>
+                    <div id="accordion-collapse-body-1" class="hidden" aria-labelledby="accordion-collapse-heading-1">
+                        <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700">
+                            <div class="flex flex-wrap -mx-2 mb-2">
+                                <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
+                                    <button id="titleButton"
+                                            class="w-full button flex flex-col items-center justify-center"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="0 0 20 20"
+                                             xmlns="http://www.w3.org/2000/svg" fill="#010713">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path d="M3 2a1 1 0 00-1 1v3a1 1 0 002 0 2 2 0 012-2h2v10.999A1 1 0 017 16h-.001A1 1 0 007 18h6a1 1 0 100-2 1 1 0 01-1-1V4h2a2 2 0 012 2 1 1 0 102 0V3a1 1 0 00-1-1H3z"
+                                                      fill="#010713"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Titre</span>
+                                    </button>
 
+                                </div>
+                                <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
+                                    <button id="paragraphButton"
+                                            class="w-full button flex flex-col items-center justify-center"
+                                            draggable="true">
+                                        <svg fill="#010713" width="48px" height="48px" viewBox="0 0 24 24"
+                                             xmlns="http://www.w3.org/2000/svg">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path d="M2,12H5a1,1,0,0,0,0-2H4.635l.586-1.692H8.779L9.365,10H9a1,1,0,0,0,0,2h3a1,1,0,0,0,0-2h-.518L8.945,2.673A1,1,0,0,0,8,2H6a1,1,0,0,0-.945.673L2.518,10H2a1,1,0,0,0,0,2ZM6.712,4h.576l.8,2.308H5.913ZM23,4a1,1,0,0,1-1,1H15a1,1,0,0,1,0-2h7A1,1,0,0,1,23,4Zm0,6a1,1,0,0,1-1,1H15a1,1,0,0,1,0-2h7A1,1,0,0,1,23,10Zm0,5a1,1,0,0,1-1,1H2a1,1,0,0,1,0-2H22A1,1,0,0,1,23,15Zm0,6a1,1,0,0,1-1,1H2a1,1,0,0,1,0-2H22A1,1,0,0,1,23,21Z"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Paragraphe</span>
+                                    </button>
+
+                                </div>
                             </div>
-                            <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
-                                <button id="imageButton"
-                                        class="w-full flex flex-col items-center justify-center button"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="0 0 24 24" id="image"
-                                         data-name="multi color" xmlns="http://www.w3.org/2000/svg"
-                                         class="icon multi-color" fill="#010713">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <polygon id="tertiary-fill"
-                                                     points="3.29 19.71 9 14 11 16 14 13 20.71 19.71 3.29 19.71"
-                                                     style="fill: #010713; stroke-width: 2;"></polygon>
-                                            <path id="primary-stroke"
-                                                  d="M20,20H4a1,1,0,0,1-1-1V5A1,1,0,0,1,4,4H20a1,1,0,0,1,1,1V19A1,1,0,0,1,20,20Zm.71-.29L14,13l-3,3L9,14,3.29,19.71Z"
-                                                  style="fill: none; stroke: #010713; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
-                                            <circle id="secondary-fill" cx="11" cy="9" r="1"
-                                                    style="fill: #2ca9bc; stroke: #010713; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></circle>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Image</span>
-                                </button>
+                            <div class="flex flex-wrap -mx-2 mb-2">
+                                <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
+                                    <button id="buttonButton"
+                                            class="w-full button flex flex-col items-center justify-center"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
+                                             xmlns="http://www.w3.org/2000/svg">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                                      d="M12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22ZM9.198 7.25H9.30203C10.2005 7.24997 10.9497 7.24995 11.5445 7.32991C12.1723 7.41432 12.7391 7.59999 13.1945 8.05546C13.65 8.51093 13.8357 9.07773 13.9201 9.70552C14.0001 10.3003 14 11.0495 14 11.948L14 12C14 12.4142 13.6642 12.75 13.25 12.75C12.8358 12.75 12.5 12.4142 12.5 12C12.5 11.036 12.4984 10.3884 12.4335 9.9054C12.3714 9.44393 12.2642 9.24644 12.1339 9.11612C12.0036 8.9858 11.8061 8.87858 11.3446 8.81654C10.8616 8.7516 10.214 8.75 9.25 8.75C8.28599 8.75 7.63843 8.7516 7.15539 8.81654C6.69393 8.87858 6.49644 8.9858 6.36612 9.11612C6.2358 9.24644 6.12858 9.44393 6.06654 9.9054C6.0016 10.3884 6 11.036 6 12C6 12.964 6.0016 13.6116 6.06654 14.0946C6.12858 14.5561 6.2358 14.7536 6.36612 14.8839C6.49644 15.0142 6.69393 15.1214 7.15539 15.1835C7.63843 15.2484 8.28599 15.25 9.25 15.25C9.66422 15.25 10 15.5858 10 16C10 16.4142 9.66422 16.75 9.25 16.75L9.19798 16.75C8.29951 16.75 7.5503 16.7501 6.95552 16.6701C6.32773 16.5857 5.76093 16.4 5.30546 15.9445C4.84999 15.4891 4.66432 14.9223 4.57991 14.2945C4.49995 13.6997 4.49997 12.9505 4.5 12.052V11.948C4.49997 11.0495 4.49995 10.3003 4.57991 9.70552C4.66432 9.07773 4.84999 8.51093 5.30546 8.05546C5.76093 7.59999 6.32773 7.41432 6.95552 7.32991C7.55029 7.24995 8.29954 7.24997 9.198 7.25ZM16.8446 8.81654C16.3616 8.7516 15.714 8.75 14.75 8.75C14.3358 8.75 14 8.41422 14 8C14 7.58579 14.3358 7.25 14.75 7.25L14.802 7.25C15.7005 7.24997 16.4497 7.24995 17.0445 7.32991C17.6723 7.41432 18.2391 7.59999 18.6945 8.05546C19.15 8.51093 19.3357 9.07773 19.4201 9.70552C19.5001 10.3003 19.5 11.0495 19.5 11.9479V12.052C19.5 12.9505 19.5001 13.6997 19.4201 14.2945C19.3357 14.9223 19.15 15.4891 18.6945 15.9445C18.2391 16.4 17.6723 16.5857 17.0445 16.6701C16.4497 16.7501 15.7005 16.75 14.802 16.75H14.698C13.7995 16.75 13.0503 16.7501 12.4555 16.6701C11.8277 16.5857 11.2609 16.4 10.8055 15.9445C10.35 15.4891 10.1643 14.9223 10.0799 14.2945C9.99995 13.6997 9.99997 12.9505 10 12.052L10 12C10 11.5858 10.3358 11.25 10.75 11.25C11.1642 11.25 11.5 11.5858 11.5 12C11.5 12.964 11.5016 13.6116 11.5665 14.0946C11.6286 14.5561 11.7358 14.7536 11.8661 14.8839C11.9964 15.0142 12.1939 15.1214 12.6554 15.1835C13.1384 15.2484 13.786 15.25 14.75 15.25C15.714 15.25 16.3616 15.2484 16.8446 15.1835C17.3061 15.1214 17.5036 15.0142 17.6339 14.8839C17.7642 14.7536 17.8714 14.5561 17.9335 14.0946C17.9984 13.6116 18 12.964 18 12C18 11.036 17.9984 10.3884 17.9335 9.9054C17.8714 9.44393 17.7642 9.24644 17.6339 9.11612C17.5036 8.9858 17.3061 8.87858 16.8446 8.81654Z"
+                                                      fill="#010713"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Bouton</span>
+                                    </button>
+
+                                </div>
+                                <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
+                                    <button id="imageButton"
+                                            class="w-full flex flex-col items-center justify-center button"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="0 0 24 24" id="image"
+                                             data-name="multi color" xmlns="http://www.w3.org/2000/svg"
+                                             class="icon multi-color" fill="#010713">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <polygon id="tertiary-fill"
+                                                         points="3.29 19.71 9 14 11 16 14 13 20.71 19.71 3.29 19.71"
+                                                         style="fill: #010713; stroke-width: 2;"></polygon>
+                                                <path id="primary-stroke"
+                                                      d="M20,20H4a1,1,0,0,1-1-1V5A1,1,0,0,1,4,4H20a1,1,0,0,1,1,1V19A1,1,0,0,1,20,20Zm.71-.29L14,13l-3,3L9,14,3.29,19.71Z"
+                                                      style="fill: none; stroke: #010713; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
+                                                <circle id="secondary-fill" cx="11" cy="9" r="1"
+                                                        style="fill: #2ca9bc; stroke: #010713; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></circle>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Image</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex flex-wrap -mx-2 mb-2">
-                            <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
-                                <button id="separatorButton"
-                                        class="w-full button flex flex-col items-center justify-center"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="-1 0 20 20"
-                                         xmlns="http://www.w3.org/2000/svg"
-                                         xmlns:xlink="http://www.w3.org/1999/xlink" fill="#010713">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier"><title>editor / 22 - editor, lines, separator,
-                                                handler, resize, vertical, sides icon</title>
-                                            <g id="Free-Icons" stroke="none" stroke-width="1" fill="none"
-                                               fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
-                                                <g transform="translate(-1118.000000, -452.000000)" id="Group"
-                                                   stroke="#010713" stroke-width="2">
-                                                    <g transform="translate(1115.000000, 450.000000)" id="Shape">
-                                                        <line x1="4" y1="12" x2="20" y2="12"></line>
-                                                        <polygon points="16.5 8 12 3 7.5 8"></polygon>
-                                                        <polygon points="16.5 16 7.5 16 12 21"></polygon>
+                            <div class="flex flex-wrap -mx-2 mb-2">
+                                <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
+                                    <button id="separatorButton"
+                                            class="w-full button flex flex-col items-center justify-center"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="-1 0 20 20"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             xmlns:xlink="http://www.w3.org/1999/xlink" fill="#010713">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier"><title>editor / 22 - editor, lines, separator,
+                                                    handler, resize, vertical, sides icon</title>
+                                                <g id="Free-Icons" stroke="none" stroke-width="1" fill="none"
+                                                   fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+                                                    <g transform="translate(-1118.000000, -452.000000)" id="Group"
+                                                       stroke="#010713" stroke-width="2">
+                                                        <g transform="translate(1115.000000, 450.000000)" id="Shape">
+                                                            <line x1="4" y1="12" x2="20" y2="12"></line>
+                                                            <polygon points="16.5 8 12 3 7.5 8"></polygon>
+                                                            <polygon points="16.5 16 7.5 16 12 21"></polygon>
+                                                        </g>
                                                     </g>
                                                 </g>
                                             </g>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Séparateur</span>
-                                </button>
+                                        </svg>
+                                        <span class="text-center text_btn">Séparateur</span>
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
+                                    <button id="videoButton"
+                                            class="w-full flex flex-col items-center justify-center button"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="0 0 1024 1024" class="icon"
+                                             xmlns="http://www.w3.org/2000/svg" fill="#010713">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path d="M759.3 352h84.3c15.5 0 28.1 9.2 28.1 20.5v277.3c0 11.3-12.6 20.5-28.1 20.5h-70.3"
+                                                      fill="#fff"></path>
+                                                <path d="M843.5 695h-70.2v-49.5h70.2c1.4 0 2.5-0.2 3.3-0.4v-268c-0.9-0.2-2-0.4-3.3-0.4h-84.2v-49.5h84.3c29.6 0 52.8 19.9 52.8 45.3v277.3c0 25.4-23.3 45.2-52.9 45.2z"
+                                                      fill="#010713"></path>
+                                                <path d="M203.5 258h531c13.7 0 24.7 11.1 24.7 24.7v457.8c0 13.7-11.1 24.7-24.7 24.7h-531c-13.7 0-24.7-11.1-24.7-24.7V282.7c-0.1-13.6 11-24.7 24.7-24.7z"
+                                                      fill="#FFFFFF"></path>
+                                                <path d="M734.5 790h-531c-27.3 0-49.5-22.2-49.5-49.5V282.7c0-27.3 22.2-49.5 49.5-49.5h531c27.3 0 49.5 22.2 49.5 49.5v457.8c0 27.3-22.2 49.5-49.5 49.5z m-531-507.3v457.8h531V282.7h-531z"
+                                                      fill="#010713"></path>
+                                                <path d="M595.8 521.2L407 656c-5.6 4-13.3 2.7-17.3-2.9-1.5-2.1-2.3-4.6-2.3-7.2V376.3c0-6.8 5.5-12.4 12.4-12.4 2.6 0 5.1 0.8 7.2 2.3L595.8 501c5.6 4 6.9 11.7 2.9 17.3-0.8 1.1-1.8 2.1-2.9 2.9z"
+                                                      fill="#fff"></path>
+                                                <path d="M399.9 683c-2.1 0-4.1-0.2-6.2-0.5-9.8-1.6-18.4-7-24.1-15.1-4.5-6.3-6.9-13.8-6.9-21.6V376.3c0-20.5 16.6-37.1 37.1-37.1 7.8 0 15.2 2.4 21.6 6.9l188.8 134.8c8.1 5.8 13.4 14.3 15 24.1 1.6 9.8-0.6 19.6-6.4 27.7-2.4 3.4-5.3 6.3-8.7 8.7L421.3 676.2c-6.3 4.5-13.8 6.8-21.4 6.8z m12.2-282.6v221.5l155.1-110.7-155.1-110.8zM581.4 501s0 0.1 0 0z"
+                                                      fill="#010713"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Vidéo</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
-                                <button id="videoButton"
-                                        class="w-full flex flex-col items-center justify-center button"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="0 0 1024 1024" class="icon"
-                                         xmlns="http://www.w3.org/2000/svg" fill="#010713">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path d="M759.3 352h84.3c15.5 0 28.1 9.2 28.1 20.5v277.3c0 11.3-12.6 20.5-28.1 20.5h-70.3"
-                                                  fill="#fff"></path>
-                                            <path d="M843.5 695h-70.2v-49.5h70.2c1.4 0 2.5-0.2 3.3-0.4v-268c-0.9-0.2-2-0.4-3.3-0.4h-84.2v-49.5h84.3c29.6 0 52.8 19.9 52.8 45.3v277.3c0 25.4-23.3 45.2-52.9 45.2z"
-                                                  fill="#010713"></path>
-                                            <path d="M203.5 258h531c13.7 0 24.7 11.1 24.7 24.7v457.8c0 13.7-11.1 24.7-24.7 24.7h-531c-13.7 0-24.7-11.1-24.7-24.7V282.7c-0.1-13.6 11-24.7 24.7-24.7z"
-                                                  fill="#FFFFFF"></path>
-                                            <path d="M734.5 790h-531c-27.3 0-49.5-22.2-49.5-49.5V282.7c0-27.3 22.2-49.5 49.5-49.5h531c27.3 0 49.5 22.2 49.5 49.5v457.8c0 27.3-22.2 49.5-49.5 49.5z m-531-507.3v457.8h531V282.7h-531z"
-                                                  fill="#010713"></path>
-                                            <path d="M595.8 521.2L407 656c-5.6 4-13.3 2.7-17.3-2.9-1.5-2.1-2.3-4.6-2.3-7.2V376.3c0-6.8 5.5-12.4 12.4-12.4 2.6 0 5.1 0.8 7.2 2.3L595.8 501c5.6 4 6.9 11.7 2.9 17.3-0.8 1.1-1.8 2.1-2.9 2.9z"
-                                                  fill="#fff"></path>
-                                            <path d="M399.9 683c-2.1 0-4.1-0.2-6.2-0.5-9.8-1.6-18.4-7-24.1-15.1-4.5-6.3-6.9-13.8-6.9-21.6V376.3c0-20.5 16.6-37.1 37.1-37.1 7.8 0 15.2 2.4 21.6 6.9l188.8 134.8c8.1 5.8 13.4 14.3 15 24.1 1.6 9.8-0.6 19.6-6.4 27.7-2.4 3.4-5.3 6.3-8.7 8.7L421.3 676.2c-6.3 4.5-13.8 6.8-21.4 6.8z m12.2-282.6v221.5l155.1-110.7-155.1-110.8zM581.4 501s0 0.1 0 0z"
-                                                  fill="#010713"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Vidéo</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap -mx-2">
-                            <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
-                                <button id="htmlCodeButton"
-                                        class="w-full button flex flex-col items-center justify-center"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path d="M7 8L3 11.6923L7 16M17 8L21 11.6923L17 16M14 4L10 20"
-                                                  stroke="#010713" stroke-width="2" stroke-linecap="round"
-                                                  stroke-linejoin="round"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Code HTML</span>
-                                </button>
-                            </div>
-                            <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
-                                <button id="spacerButton"
-                                        class="w-full flex flex-col items-center justify-center button"
-                                        draggable="true">
-                                    <svg fill="#010713" width="48px" height="48px" viewBox="0 0 52 52"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path d="M3,1V17a2,2,0,0,0,2,2H47a2,2,0,0,0,2-2V1H45V15H7V1ZM49,51V35a2,2,0,0,0-2-2H5a2,2,0,0,0-2,2V51H7V37H45V51ZM12,28H4V24h8Zm4,0h8V24H16Zm20,0H28V24h8Zm4,0h8V24H40Z"
-                                                  fill-rule="evenodd"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Espaceur</span>
-                                </button>
+                            <div class="flex flex-wrap -mx-2">
+                                <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
+                                    <button id="htmlCodeButton"
+                                            class="w-full button flex flex-col items-center justify-center"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
+                                             xmlns="http://www.w3.org/2000/svg">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path d="M7 8L3 11.6923L7 16M17 8L21 11.6923L17 16M14 4L10 20"
+                                                      stroke="#010713" stroke-width="2" stroke-linecap="round"
+                                                      stroke-linejoin="round"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Code HTML</span>
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/2 px-2 mb-2 md:mb-0">
+                                    <button id="spacerButton"
+                                            class="w-full flex flex-col items-center justify-center button"
+                                            draggable="true">
+                                        <svg fill="#010713" width="48px" height="48px" viewBox="0 0 52 52"
+                                             xmlns="http://www.w3.org/2000/svg">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path d="M3,1V17a2,2,0,0,0,2,2H47a2,2,0,0,0,2-2V1H45V15H7V1ZM49,51V35a2,2,0,0,0-2-2H5a2,2,0,0,0-2,2V51H7V37H45V51ZM12,28H4V24h8Zm4,0h8V24H16Zm20,0H28V24h8Zm4,0h8V24H40Z"
+                                                      fill-rule="evenodd"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Espaceur</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <h2 id="accordion-collapse-heading-2">
-                    <button type="button"
-                            class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3"
-                            data-accordion-target="#accordion-collapse-body-2" aria-expanded="false"
-                            aria-controls="accordion-collapse-body-2">
-                        <span>Mise en page</span>
-                        <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
-                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                            <path stroke="currentColor" stroke-linecap="#010713" stroke-linejoin="round"
-                                  stroke-width="2" d="M9 5 5 1 1 5"/>
-                        </svg>
-                    </button>
-                </h2>
-                <div id="accordion-collapse-body-2" class="hidden" aria-labelledby="accordion-collapse-heading-2">
-                    <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700">
-                        <div class="flex flex-wrap -mx-2 mb-2">
-                            <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
-                                <button id="boldButton"
-                                        class="w-full button flex flex-col items-center justify-center"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path d="M6 12H12.5C14.9853 12 17 9.98528 17 7.5C17 5.01472 14.9853 3 12.5 3H6V12ZM6 12H13.5C15.9853 12 18 14.0147 18 16.5C18 18.9853 15.9853 21 13.5 21H6V12Z"
-                                                  stroke="#000000" stroke-width="2" stroke-linecap="round"
-                                                  stroke-linejoin="round"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Gras</span>
-                                </button>
+                    <h2 id="accordion-collapse-heading-2">
+                        <button type="button"
+                                class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3"
+                                data-accordion-target="#accordion-collapse-body-2" aria-expanded="false"
+                                aria-controls="accordion-collapse-body-2">
+                            <span>Mise en page</span>
+                            <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                                <path stroke="currentColor"  stroke-linejoin="round"
+                                      stroke-width="2" d="M9 5 5 1 1 5"/>
+                            </svg>
+                        </button>
+                    </h2>
+                    <div id="accordion-collapse-body-2" class="hidden" aria-labelledby="accordion-collapse-heading-2">
+                        <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700">
+                            <div class="flex flex-wrap -mx-2 mb-2">
+                                <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
+                                    <button id="boldButton"
+                                            class="w-full button flex flex-col items-center justify-center"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
+                                             xmlns="http://www.w3.org/2000/svg">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path d="M6 12H12.5C14.9853 12 17 9.98528 17 7.5C17 5.01472 14.9853 3 12.5 3H6V12ZM6 12H13.5C15.9853 12 18 14.0147 18 16.5C18 18.9853 15.9853 21 13.5 21H6V12Z"
+                                                      stroke="#000000" stroke-width="2" stroke-linecap="round"
+                                                      stroke-linejoin="round"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Gras</span>
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
+                                    <button id="italicButton"
+                                            class="w-full flex flex-col items-center justify-center button"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
+                                             xmlns="http://www.w3.org/2000/svg">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path d="M10 3H20M4 21H14M15 3L9 21" stroke="#010713" stroke-width="2"
+                                                      stroke-linecap="round" stroke-linejoin="round"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Italique</span>
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
+                                    <button id="underlineButton"
+                                            class="w-full flex flex-col items-center justify-center button"
+                                            draggable="true">
+                                        <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
+                                             xmlns="http://www.w3.org/2000/svg">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                               stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path d="M4 21H20M18 4V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4M4 3H8M16 3H20"
+                                                      stroke="#010713" stroke-width="2" stroke-linecap="round"
+                                                      stroke-linejoin="round"></path>
+                                            </g>
+                                        </svg>
+                                        <span class="text-center text_btn">Soulignage</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
-                                <button id="italicButton"
-                                        class="w-full flex flex-col items-center justify-center button"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path d="M10 3H20M4 21H14M15 3L9 21" stroke="#010713" stroke-width="2"
-                                                  stroke-linecap="round" stroke-linejoin="round"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Italique</span>
-                                </button>
-                            </div>
-                            <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
-                                <button id="underlineButton"
-                                        class="w-full flex flex-col items-center justify-center button"
-                                        draggable="true">
-                                    <svg width="48px" height="48px" viewBox="0 0 24 24" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                           stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path d="M4 21H20M18 4V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4M4 3H8M16 3H20"
-                                                  stroke="#010713" stroke-width="2" stroke-linecap="round"
-                                                  stroke-linejoin="round"></path>
-                                        </g>
-                                    </svg>
-                                    <span class="text-center text_btn">Soulignage</span>
-                                </button>
-                            </div>
-                        </div>
-                        <p class="block text-sm font-medium text-gray-700 mb-1">Alignement</p>
-                        <div class="flex flex-wrap -mx-2 mb-2">
-                            <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
-                                <button id="alignLeftButton"
-                                        class="w-full button flex flex-col items-center justify-center"
-                                        draggable="true">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="#010713" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M3.75 6.75h16.5M3.75 12H12m-8.25 5.25h16.5"/>
-                                    </svg>
-                                </button>
+                            <p class="block text-sm font-medium text-gray-700 mb-1">Alignement</p>
+                            <div class="flex flex-wrap -mx-2 mb-2">
+                                <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
+                                    <button id="alignLeftButton"
+                                            class="w-full button flex flex-col items-center justify-center"
+                                            draggable="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="#010713" viewBox="0 0 24 24"
+                                             stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M3.75 6.75h16.5M3.75 12H12m-8.25 5.25h16.5"/>
+                                        </svg>
+                                    </button>
 
+                                </div>
+                                <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
+                                    <button id="alignCenterButton"
+                                            class="w-full flex flex-col items-center justify-center button"
+                                            draggable="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="#010713" viewBox="0 0 24 24"
+                                             stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
+                                    <button id="alignRightButton"
+                                            class="w-full flex flex-col items-center justify-center button"
+                                            draggable="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="#010713" viewBox="0 0 24 24"
+                                             stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
-                                <button id="alignCenterButton"
-                                        class="w-full flex flex-col items-center justify-center button"
-                                        draggable="true">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="#010713" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
-                                    </svg>
-                                </button>
+                            <div class="mb-2">
+                                <label for="fontSelect" class="block text-sm font-medium text-gray-700">Police de
+                                    caractère</label>
+                                <select id="fontSelect"
+                                        class="mt-1 block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="Verdana">Verdana</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Open Sans">Open Sans</option>
+                                </select>
                             </div>
-                            <div class="w-full md:w-1/3 px-2 mb-2 md:mb-0">
-                                <button id="alignRightButton"
-                                        class="w-full flex flex-col items-center justify-center button"
-                                        draggable="true">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="#010713" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25"/>
-                                    </svg>
-                                </button>
+                            <div class="mb-2">
+                                <label for="fontSizeSelect" class="block text-sm font-medium text-gray-700">
+                                    Taille de texte
+                                </label>
+                                <select id="fontSizeSelect"
+                                        class="mt-1 block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
+                                    <option value="10px">10px</option>
+                                    <option value="12px">12px</option>
+                                    <option value="14px">14px</option>
+                                    <option value="16px">16px</option>
+                                    <option value="18px">18px</option>
+                                    <option value="20px">20px</option>
+                                    <option value="22px">22px</option>
+                                    <option value="24px">24px</option>
+                                    <option value="26px">26px</option>
+                                    <option value="28px">28px</option>
+                                    <option value="30px">30px</option>
+                                    <option value="32px">32px</option>
+                                    <option value="34px">34px</option>
+                                    <option value="36px">36px</option>
+                                    <option value="38px">38px</option>
+                                    <option value="40px">40px</option>
+                                    <option value="42px">42px</option>
+                                    <option value="44px">44px</option>
+                                    <option value="46px">46px</option>
+                                </select>
                             </div>
-                        </div>
-                        <div class="mb-2">
-                            <label for="fontSelect" class="block text-sm font-medium text-gray-700">Police de
-                                caractère</label>
-                            <select id="fontSelect"
-                                    class="mt-1 block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
-                                <option value="Arial">Arial</option>
-                                <option value="Times New Roman">Times New Roman</option>
-                                <option value="Verdana">Verdana</option>
-                            </select>
-                        </div>
-                        <div class="mb-2">
-                            <label for="fontSizeSelect" class="block text-sm font-medium text-gray-700">
-                                Taille de texte
-                            </label>
-                            <select id="fontSizeSelect"
-                                    class="mt-1 block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
-                                <option value="10px">10px</option>
-                                <option value="12px">12px</option>
-                                <option value="14px">14px</option>
-                                <option value="16px">16px</option>
-                                <option value="18px">18px</option>
-                                <option value="20px">20px</option>
-                                <option value="22px">22px</option>
-                                <option value="24px">24px</option>
-                                <option value="26px">26px</option>
-                                <option value="28px">28px</option>
-                                <option value="30px">30px</option>
-                                <option value="32px">32px</option>
-                                <option value="34px">34px</option>
-                            </select>
+
+                            <div class="mb-2">
+                                <label for="colorPicker" class="block text-sm font-medium text-gray-700">
+                                    Couleur
+                                </label>
+                                <input id="colorPicker" class="mt-1 block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md" type="color">
+                            </div>
                         </div>
                     </div>
-                </div>
-                <h2 id="accordion-collapse-heading-3">
-                    <button type="button"
-                            class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3"
-                            data-accordion-target="#accordion-collapse-body-3" aria-expanded="false"
-                            aria-controls="accordion-collapse-body-3">
-                        <span>Modèles Prédéfinis</span>
-                        <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
-                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                            <path stroke="currentColor" stroke-linecap="#010713" stroke-linejoin="round"
-                                  stroke-width="2" d="M9 5 5 1 1 5"/>
-                        </svg>
-                    </button>
-                </h2>
-                <div id="accordion-collapse-body-3" class="hidden" aria-labelledby="accordion-collapse-heading-3">
-                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
-                        <div class="mb-2">
-                            <button id="footerButton" class="w-full button" draggable="true">Ajouter un Footer
-                            </button>
+                    <h2 id="accordion-collapse-heading-3">
+                        <button type="button"
+                                class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3"
+                                data-accordion-target="#accordion-collapse-body-3" aria-expanded="false"
+                                aria-controls="accordion-collapse-body-3">
+                            <span>Modèles Prédéfinis</span>
+                            <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                                <path stroke="currentColor"  stroke-linejoin="round"
+                                      stroke-width="2" d="M9 5 5 1 1 5"/>
+                            </svg>
+                        </button>
+                    </h2>
+                    <div id="accordion-collapse-body-3" class="hidden" aria-labelledby="accordion-collapse-heading-3">
+                        <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                            <div class="mb-2">
+                                <button id="footerButton" class="w-full button" draggable="true">Ajouter un Footer
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-span-3 relative">
-        {{ form_widget(form.body, {'attr': {'class': 'w-full mt-1 form-input rounded-md shadow-sm editor'}}) }}
+        <div class="col-span-3 relative">
+            {{ form_widget(form.body, {'attr': {'class': 'w-full mt-1 form-input rounded-md shadow-sm editor'}}) }}
 
-        <div id="imageToolbar"
-             class="hidden bg-white rounded-md border border-gray-300 absolute top-0 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-md flex items-center justify-between">
-            <!-- Texte à gauche -->
-            <div class="flex items-center p-4 bg-secondary text-white">
-                <div class="rounded-md">Modifier l'élément</div>
-            </div>
+            <div id="imageToolbar"
+                 class="hidden bg-white rounded-md border border-gray-300 absolute top-0 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-md flex items-center justify-between">
+                <!-- Texte à gauche -->
+                <div class="flex items-center p-4 bg-secondary text-white">
+                    <div class="rounded-md">Modifier l'élément</div>
+                </div>
 
-            <!-- Boutons centrés -->
-            <div class="flex items-center justify-center space-x-4 flex-1">
-                <!-- Bouton Redimensionner -->
-                <button id="btnResizeImage" class="p-2 text-gray-500 hover:text-gray-700"
-                        title="Redimensionner l'image">
-                    <svg width="32px" height="32px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-                         fill="#010713">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <path d="M6 17h17V3H6zm16-1H7v-3.386l1.771-1.771a1.38 1.38 0 0 0 1.402-.334l2.288-2.29 2.27 1.892a1.376 1.376 0 0 0 1.708.043l1.245-.933L22 12.681zm0-12v7.399l-4.035-3.234a.377.377 0 0 0-.493-.035l-1.633 1.225a.377.377 0 0 1-.468-.012l-2.706-2.256a.377.377 0 0 0-.509.023L9.466 9.8a.377.377 0 0 1-.533 0 .377.377 0 0 0-.533 0L7 11.2V4zm-6.5 1.521v-.043a.979.979 0 0 1 .979-.978A1.021 1.021 0 0 1 17.5 5.521a.979.979 0 0 1-.979.979h-.043a.981.981 0 0 1-.978-.979zM21 18.824l2.058 1.676L21 22.176V21H8v1.176L5.942 20.5 8 18.824V20h13zM3 5v10h1.176L2.5 17.058.824 15H2V5H.824L2.5 2.942 4.176 5z"></path>
-                            <path fill="none" d="M0 0h24v24H0z"></path>
-                        </g>
-                    </svg>
-                </button>
+                <!-- Boutons centrés -->
+                <div class="flex items-center justify-center space-x-4 flex-1">
+                    <!-- Bouton Redimensionner -->
+                    <button id="btnResizeImage" class="p-2 text-gray-500 hover:text-gray-700"
+                            title="Redimensionner l'image">
+                        <svg width="32px" height="32px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                             fill="#010713">
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <path d="M6 17h17V3H6zm16-1H7v-3.386l1.771-1.771a1.38 1.38 0 0 0 1.402-.334l2.288-2.29 2.27 1.892a1.376 1.376 0 0 0 1.708.043l1.245-.933L22 12.681zm0-12v7.399l-4.035-3.234a.377.377 0 0 0-.493-.035l-1.633 1.225a.377.377 0 0 1-.468-.012l-2.706-2.256a.377.377 0 0 0-.509.023L9.466 9.8a.377.377 0 0 1-.533 0 .377.377 0 0 0-.533 0L7 11.2V4zm-6.5 1.521v-.043a.979.979 0 0 1 .979-.978A1.021 1.021 0 0 1 17.5 5.521a.979.979 0 0 1-.979.979h-.043a.981.981 0 0 1-.978-.979zM21 18.824l2.058 1.676L21 22.176V21H8v1.176L5.942 20.5 8 18.824V20h13zM3 5v10h1.176L2.5 17.058.824 15H2V5H.824L2.5 2.942 4.176 5z"></path>
+                                <path fill="none" d="M0 0h24v24H0z"></path>
+                            </g>
+                        </svg>
+                    </button>
 
-                <!-- Bouton Changer Image -->
-                <button id="btnChangeImage" class="p-2 text-gray-500 hover:text-gray-700" title="Changer l'image">
-                    <svg width="32px" height="32px" viewBox="0 0 512 512" version="1.1" xml:space="preserve"
-                         xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                         fill="#010713"><g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <style type="text/css"> .st0 {
-                                    fill: #333333;
-                                }
-
-                                .st1 {
-                                    fill: none;
-                                    stroke: #333333;
-                                    stroke-width: 32;
-                                    stroke-linecap: round;
-                                    stroke-linejoin: round;
-                                    stroke-miterlimit: 10;
-                                } </style>
-                            <g id="Layer_1"></g>
-                            <g id="Layer_2">
-                                <g>
+                    <!-- Bouton Changer Image -->
+                    <button id="btnChangeImage" class="p-2 text-gray-500 hover:text-gray-700" title="Changer l'image">
+                        <svg width="32px" height="32px" viewBox="0 0 512 512" xml:space="preserve"
+                             xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                             fill="#010713"><g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <style type="text/css"> .st0 {
+                                        fill: #333333;
+                                    }
+                                </style>
+                                <g id="Layer_1"></g>
+                                <g id="Layer_2">
                                     <g>
-                                        <path class="st0"
-                                              d="M307.81,212.18c-3.24,0-6.07-2.17-6.91-5.3l-4.82-17.88c-0.84-3.12-3.68-5.3-6.91-5.3h-21.46h-25.44H220.8 c-3.24,0-6.07,2.17-6.91,5.3l-4.82,17.88c-0.84,3.12-3.68,5.3-6.91,5.3H169.5c-3.96,0-7.16,3.21-7.16,7.16v101.78 c0,3.96,3.21,7.16,7.16,7.16h170.95c3.96,0,7.16-3.21,7.16-7.16V219.35c0-3.96-3.21-7.16-7.16-7.16H307.81z M282.33,264.94 c-0.86,13.64-11.93,24.71-25.58,25.58c-16.54,1.05-30.18-12.59-29.14-29.14c0.86-13.64,11.93-24.71,25.58-25.58 C269.74,234.76,283.38,248.4,282.33,264.94z"></path>
-                                    </g>
-                                    <g>
-                                        <path class="st0"
-                                              d="M82.95,272.41c3.82,0,7.53-1.53,10.23-4.23l21.23-21.23c4.74-4.74,6.4-11.92,3.73-18.06 c-2.73-6.29-8.88-8.95-18.84-7.57l-0.27,0.27c15.78-71.56,79.7-125.27,155.94-125.27c60.72,0,115.41,33.72,142.73,87.99 c3.58,7.11,12.24,9.97,19.34,6.39c7.11-3.58,9.97-12.24,6.39-19.34c-15.47-30.73-39.05-56.66-68.22-75.01 C325.23,77.47,290.57,67.5,254.98,67.5c-93,0-170.48,67.71-185.75,156.41c-5.38-4.77-13.59-5.18-19.13-0.44 c-6.3,5.39-6.75,14.88-1.13,20.84c0.23,0.24,5.69,6.03,11.41,11.93c3.41,3.51,6.2,6.33,8.3,8.38c4.23,4.13,7.88,7.69,14.07,7.78 C82.81,272.41,82.88,272.41,82.95,272.41z"></path>
-                                    </g>
-                                    <g>
-                                        <path class="st0"
-                                              d="M464.28,247.82l-26.5-26.5c-2.75-2.75-6.57-4.3-10.44-4.23c-2.33,0.03-4.29,0.56-6.07,1.42 c-0.26,0.12-0.51,0.26-0.76,0.4c-0.04,0.02-0.08,0.04-0.12,0.06c-0.59,0.33-1.16,0.68-1.69,1.08c-1.88,1.34-3.6,3.03-5.44,4.82 c-2.1,2.05-4.89,4.87-8.3,8.38c-5.72,5.9-11.18,11.68-11.41,11.93c-5.46,5.79-5.19,14.91,0.6,20.36 c5.75,5.42,14.77,5.18,20.24-0.48c-4.72,83.85-74.42,150.62-159.43,150.62c-70.52,0-131.86-45.23-152.62-112.55 c-2.35-7.6-10.41-11.86-18.01-9.52c-7.6,2.34-11.86,10.41-9.52,18.01c11.62,37.68,35.48,71.52,67.19,95.28 c32.8,24.59,71.86,37.58,112.96,37.58c100.11,0,182.23-78.45,188.14-177.1l0.79,0.79c2.81,2.81,6.5,4.22,10.18,4.22 c3.69,0,7.37-1.41,10.18-4.22C469.91,262.57,469.91,253.45,464.28,247.82z"></path>
+                                        <g>
+                                            <path class="st0"
+                                                  d="M307.81,212.18c-3.24,0-6.07-2.17-6.91-5.3l-4.82-17.88c-0.84-3.12-3.68-5.3-6.91-5.3h-21.46h-25.44H220.8 c-3.24,0-6.07,2.17-6.91,5.3l-4.82,17.88c-0.84,3.12-3.68,5.3-6.91,5.3H169.5c-3.96,0-7.16,3.21-7.16,7.16v101.78 c0,3.96,3.21,7.16,7.16,7.16h170.95c3.96,0,7.16-3.21,7.16-7.16V219.35c0-3.96-3.21-7.16-7.16-7.16H307.81z M282.33,264.94 c-0.86,13.64-11.93,24.71-25.58,25.58c-16.54,1.05-30.18-12.59-29.14-29.14c0.86-13.64,11.93-24.71,25.58-25.58 C269.74,234.76,283.38,248.4,282.33,264.94z"></path>
+                                        </g>
+                                        <g>
+                                            <path class="st0"
+                                                  d="M82.95,272.41c3.82,0,7.53-1.53,10.23-4.23l21.23-21.23c4.74-4.74,6.4-11.92,3.73-18.06 c-2.73-6.29-8.88-8.95-18.84-7.57l-0.27,0.27c15.78-71.56,79.7-125.27,155.94-125.27c60.72,0,115.41,33.72,142.73,87.99 c3.58,7.11,12.24,9.97,19.34,6.39c7.11-3.58,9.97-12.24,6.39-19.34c-15.47-30.73-39.05-56.66-68.22-75.01 C325.23,77.47,290.57,67.5,254.98,67.5c-93,0-170.48,67.71-185.75,156.41c-5.38-4.77-13.59-5.18-19.13-0.44 c-6.3,5.39-6.75,14.88-1.13,20.84c0.23,0.24,5.69,6.03,11.41,11.93c3.41,3.51,6.2,6.33,8.3,8.38c4.23,4.13,7.88,7.69,14.07,7.78 C82.81,272.41,82.88,272.41,82.95,272.41z"></path>
+                                        </g>
+                                        <g>
+                                            <path class="st0"
+                                                  d="M464.28,247.82l-26.5-26.5c-2.75-2.75-6.57-4.3-10.44-4.23c-2.33,0.03-4.29,0.56-6.07,1.42 c-0.26,0.12-0.51,0.26-0.76,0.4c-0.04,0.02-0.08,0.04-0.12,0.06c-0.59,0.33-1.16,0.68-1.69,1.08c-1.88,1.34-3.6,3.03-5.44,4.82 c-2.1,2.05-4.89,4.87-8.3,8.38c-5.72,5.9-11.18,11.68-11.41,11.93c-5.46,5.79-5.19,14.91,0.6,20.36 c5.75,5.42,14.77,5.18,20.24-0.48c-4.72,83.85-74.42,150.62-159.43,150.62c-70.52,0-131.86-45.23-152.62-112.55 c-2.35-7.6-10.41-11.86-18.01-9.52c-7.6,2.34-11.86,10.41-9.52,18.01c11.62,37.68,35.48,71.52,67.19,95.28 c32.8,24.59,71.86,37.58,112.96,37.58c100.11,0,182.23-78.45,188.14-177.1l0.79,0.79c2.81,2.81,6.5,4.22,10.18,4.22 c3.69,0,7.37-1.41,10.18-4.22C469.91,262.57,469.91,253.45,464.28,247.82z"></path>
+                                        </g>
                                     </g>
                                 </g>
-                            </g>
-                        </g></svg>
-                </button>
+                            </g></svg>
+                    </button>
 
-                <!-- Bouton Centrer -->
-                <button id="btnAlignCenter" class="p-2 text-gray-500 hover:text-gray-700" title="Centrer l'image">
-                    <svg height="32px" width="32px" xmlns="http://www.w3.org/2000/svg" fill="#010713"
-                         viewBox="0 0 24 24"
-                         stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
-                    </svg>
-                </button>
-            </div>
-            <button id="closeImageToolbar" class="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-
-
-        <div id="textToolbar"
-             class="hidden bg-white rounded-md border border-gray-300 absolute top-0 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-md flex items-center justify-between">
-            <!-- Texte à gauche -->
-            <div class="flex items-center p-4 bg-secondary text-white">
-                <div class="rounded-md">Modifier l'élément</div>
-            </div>
-
-            <!-- Boutons centrés -->
-            <div class="flex items-center justify-center space-x-4 flex-1">
-
-                <!-- Bouton Gras -->
-                <button id="btnBold" class="p-2 text-gray-500 hover:text-gray-700"
-                        title="Mettre en gras">
-                    <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                           stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <path d="M6 12H12.5C14.9853 12 17 9.98528 17 7.5C17 5.01472 14.9853 3 12.5 3H6V12ZM6 12H13.5C15.9853 12 18 14.0147 18 16.5C18 18.9853 15.9853 21 13.5 21H6V12Z"
-                                  stroke="#000000" stroke-width="2" stroke-linecap="round"
-                                  stroke-linejoin="round"></path>
-                        </g>
-                    </svg>
-                </button>
-
-                <!-- Bouton Italique -->
-                <button id="btnItalic" class="p-2 text-gray-500 hover:text-gray-700" title="Mettre en italique">
-                    <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                           stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <path d="M10 3H20M4 21H14M15 3L9 21" stroke="#010713" stroke-width="2"
-                                  stroke-linecap="round" stroke-linejoin="round"></path>
-                        </g>
-                    </svg>
-                </button>
-
-                <!-- Bouton Underline -->
-                <button id="btnUnderline" class="p-2 text-gray-500 hover:text-gray-700" title="Souligner">
-                    <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                           stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <path d="M4 21H20M18 4V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4M4 3H8M16 3H20"
-                                  stroke="#010713" stroke-width="2" stroke-linecap="round"
-                                  stroke-linejoin="round"></path>
-                        </g>
-                    </svg>
-                </button>
-
-                <div class="p-2 text-gray-500 hover:text-gray-700">
-                    <select id="fontSelectToolbar"
-                            class="mt-1 block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
-                        <option value="Arial">Arial</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Verdana">Verdana</option>
-                    </select>
+                    <!-- Bouton Centrer -->
+                    <button id="btnAlignCenter" class="p-2 text-gray-500 hover:text-gray-700" title="Centrer l'image">
+                        <svg height="32px" width="32px" xmlns="http://www.w3.org/2000/svg" fill="#010713"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+                        </svg>
+                    </button>
                 </div>
+                <button id="closeImageToolbar" class="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
-            <button id="closeTextToolbar" class="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+
+
+            <div id="textToolbar"
+                 class="hidden bg-white rounded-md border border-gray-300 absolute top-0 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-md flex items-center justify-between">
+                <!-- Texte à gauche -->
+                <div class="flex items-center p-4 bg-secondary text-white">
+                    <div class="rounded-md">Modifier l'élément</div>
+                </div>
+
+                <!-- Boutons centrés -->
+                <div class="flex items-center justify-center space-x-4 flex-1">
+
+                    <!-- Bouton Gras -->
+                    <button id="btnBold" class="p-2 text-gray-500 hover:text-gray-700"
+                            title="Mettre en gras">
+                        <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                               stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <path d="M6 12H12.5C14.9853 12 17 9.98528 17 7.5C17 5.01472 14.9853 3 12.5 3H6V12ZM6 12H13.5C15.9853 12 18 14.0147 18 16.5C18 18.9853 15.9853 21 13.5 21H6V12Z"
+                                      stroke="#000000" stroke-width="2" stroke-linecap="round"
+                                      stroke-linejoin="round"></path>
+                            </g>
+                        </svg>
+                    </button>
+
+                    <!-- Bouton Italique -->
+                    <button id="btnItalic" class="p-2 text-gray-500 hover:text-gray-700" title="Mettre en italique">
+                        <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                               stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <path d="M10 3H20M4 21H14M15 3L9 21" stroke="#010713" stroke-width="2"
+                                      stroke-linecap="round" stroke-linejoin="round"></path>
+                            </g>
+                        </svg>
+                    </button>
+
+                    <!-- Bouton Underline -->
+                    <button id="btnUnderline" class="p-2 text-gray-500 hover:text-gray-700" title="Souligner">
+                        <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                               stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <path d="M4 21H20M18 4V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4M4 3H8M16 3H20"
+                                      stroke="#010713" stroke-width="2" stroke-linecap="round"
+                                      stroke-linejoin="round"></path>
+                            </g>
+                        </svg>
+                    </button>
+
+                    <div class="p-2 text-gray-500 hover:text-gray-700">
+                        <select id="fontSelectToolbar"
+                                class="mt-1 block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="closeTextToolbar" class="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
-
-    <button type="submit"
-            class="block w-full rounded-md border-0 py-1.5 text-white hover:bg-red-700 bg-red-500 shadow-sm ring-1 ring-inset ring-red-600 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 cursor-pointer">
-        Enregistrer
-    </button>
-
     {{ form_end(form) }}
 {% endblock content %}
