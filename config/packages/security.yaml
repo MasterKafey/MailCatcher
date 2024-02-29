@@ -23,7 +23,11 @@ security:
         - { path: ^/(login|upgrade), roles: PUBLIC_ACCESS }
         - { path: ^/template/send, roles: PUBLIC_ACCESS }
         - { path: ^/settings, roles: ROLE_ADMIN }
+        - - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/, roles: ROLE_USER }
+
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
 
 
 when@test:

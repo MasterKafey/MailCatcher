@@ -24,6 +24,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     private ?string $plainPassword = null;
 
+    #[ORM\Column]
+    private array $roles = ['ROLE_USER'];
+
     public function getId(): int
     {
         return $this->id;
@@ -64,7 +67,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        return ['ROLE_USER'];
+        return $this->roles;
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+        return $this;
     }
 
     public function eraseCredentials(): void
