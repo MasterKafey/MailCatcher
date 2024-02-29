@@ -22,7 +22,9 @@ security:
     access_control:
         - { path: ^/(login|upgrade), roles: PUBLIC_ACCESS }
         - { path: ^/template/send, roles: PUBLIC_ACCESS }
+        - { path: ^/settings, roles: ROLE_ADMIN }
         - { path: ^/, roles: ROLE_USER }
+
 
 when@test:
     security:
